@@ -1,0 +1,64 @@
+<html>
+<head>
+  <title>Chromecast Sample Default Receiver</title>
+  <script src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
+</head>
+
+<body style='overflow: hidden'>
+  <div id='player'></div>
+  <script>
+    // Locations of the images that will show on receiver screens. You are welcomed to configure these image locations.
+    var SPLASH_SCREEN_SRC = "./images/ooyala-logo.png";
+    var LOGO_IMAGE_SRC = "./images/ooyala-logo.png";
+    var PAUSE_ICON_SRC = " ./images/pause.png";
+    var WATERMARK_ICON_SRC = "./images/ooyala-logo-watermark.png";
+   
+    window.onload = function() {
+      var V3_URL = "//player.ooyala.com/v3/51a0285082d44e37b5d3fbf2b4a9812b?debug=true&version=8f0f4684c901bfdb2ee9367f2e067798bdba1e47";
+
+      var playerJs = document.createElement("script");
+      playerJs.type = "text/javascript";
+      playerJs.src = V3_URL;
+
+      playerJs.onload = (function() {
+        window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
+        window.castMB = window.castReceiverManager.getCastMessageBus("urn:x-cast:ooyala");
+        // onMessage gets called every time the sender sends a message
+        // It receives messages through google's message bus and will then
+        // publish events to ooyala core player message bus
+        window.castMB.onMessage = function(evt) {
+          // Adds error handling to the received messages
+          var message = null;
+          var ERROR_MESSAGE = "Exception in message format";
+
+          var success = false;
+          if (!!evt && !!evt.data) {
+            var message = JSON.parse(evt.data);
+            if (!!message.action && message.action === "init" && !!message.data) {
+              var data = message.data;
+              var playerParams = (!data.params) ? {} : eval("(" + data.params + ")");
+              if (typeof playerParams['autoplay'] !== 'boolean') {
+                playerParams['autoplay'] = true;
+              }
+              data['splashScreen'] = SPLASH_SCREEN_SRC;
+              data['logoImage'] = LOGO_IMAGE_SRC;
+              data['pauseIcon'] = PAUSE_ICON_SRC;
+              data['watermarkIcon'] = WATERMARK_ICON_SRC;
+              var player = OO.Player.create('player', data.ec, playerParams);
+              player.mb.publish(OO.EVENTS.CHROMECAST_INIT, message);
+              success = true;
+            } else {
+              // we shouldn't get here, message bus will be intercepted by cast_receiver after init
+              console.log("******** Unprocessed message:", JSON.stringify(message));
+            }
+          }
+          if (!success) {
+            console.log(ERROR_MESSAGE);
+          }
+        };
+      });
+      document.head.appendChild(playerJs);
+    }
+  </script>
+</body>
+</html>
