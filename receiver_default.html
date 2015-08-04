@@ -46,10 +46,10 @@
               if (typeof playerParams['autoplay'] !== 'boolean') {
                 playerParams['autoplay'] = true;
               }
-              data['splashScreen'] = SPLASH_SCREEN_SRC;
-              data['logoImage'] = LOGO_IMAGE_SRC;
-              data['pauseIcon'] = PAUSE_ICON_SRC;
-              data['watermarkIcon'] = WATERMARK_ICON_SRC;
+              playerParams['splashScreen'] = SPLASH_SCREEN_SRC;
+              playerParams['logoImage'] = LOGO_IMAGE_SRC;
+              playerParams['pauseIcon'] = PAUSE_ICON_SRC;
+              playerParams['watermarkIcon'] = WATERMARK_ICON_SRC;
               var player = OO.Player.create('player', data.ec, playerParams);
               player.mb.publish(OO.EVENTS.CHROMECAST_INIT, message);
               success = true;
