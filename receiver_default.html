@@ -5,6 +5,9 @@
 </head>
 
 <body style='overflow: hidden'>
+  <div id="splash_screen" style="width: 100%; height: 100%; background-color: black;">
+      <img id="splash_image" style="display: block; width: 50%; margin: auto; position: absolute; top: 0; left: 0; bottom: 0; right: 0; vertical-align: middle" />
+  </div>
   <div id='player'></div>
   <script>
     // Locations of the images that will show on receiver screens. You are welcomed to configure these image locations.
@@ -16,6 +19,9 @@
     window.onload = function() {
       var V3_URL = "//player.ooyala.com/v3/51a0285082d44e37b5d3fbf2b4a9812b?debug=true&version=9e28b8207659436dbefc2823053618f0ffdc1679";
 
+      var splashImage = document.querySelector("#splash_image");
+      splashImage.src = SPLASH_SCREEN_SRC;
+        
       var playerJs = document.createElement("script");
       playerJs.type = "text/javascript";
       playerJs.src = V3_URL;

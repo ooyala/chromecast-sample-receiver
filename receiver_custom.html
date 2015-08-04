@@ -224,8 +224,9 @@
     Set up source URLs for splash screen image and logo image
     **/
     function initSplashScreen() {
-      $("#splash").attr("src", SPLASH_SCREEN_SRC);
+      $("#splash_image").attr("src", SPLASH_SCREEN_SRC);
       $("#logo_image").attr("src", LOGO_IMAGE_SRC);
+      screenController.showScreen(splashScreen);
     }
 
     /**
