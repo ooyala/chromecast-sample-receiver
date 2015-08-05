@@ -178,7 +178,7 @@
             // For first time setup, load the Ooyala player
             // Otherwise, simply set the embed code
             if (!hasBeenInitialized) {
-              initSplashScreen();
+              screenController.showScreen(splashScreen);
               initPlayer(message.data);
             } else {
               reinitPlayer(message.data);
@@ -218,15 +218,6 @@
             break;
         }
       }
-    }
-
-    /**
-    Set up source URLs for splash screen image and logo image
-    **/
-    function initSplashScreen() {
-      $("#splash_image").attr("src", SPLASH_SCREEN_SRC);
-      $("#logo_image").attr("src", LOGO_IMAGE_SRC);
-      screenController.showScreen(splashScreen);
     }
 
     /**
@@ -502,6 +493,9 @@
     These screens DOM are instantiated at the beginning of this HTML page.
     **/
     function initUIElements() {
+      document.getElementById('splash_image').src = SPLASH_SCREEN_SRC;
+      document.getElementById('logo_image').src = LOGO_IMAGE_SRC;
+
       promoImageElement = document.getElementById('promo_image');
       titleElement = document.getElementById('loading_title');
       descriptionElement = document.getElementById('loading_description');
