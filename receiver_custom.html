@@ -282,6 +282,7 @@
                 break;
               case OO.EVENTS.PRELOAD_STREAM:
                 if (autoPlay) {
+                  // Controlled extention of loading screen display
                   setTimeout(function() {
                     player.mb.publish(OO.EVENTS.CAN_PLAY);
                   }, 3000);
