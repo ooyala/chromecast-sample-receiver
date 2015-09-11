@@ -789,6 +789,9 @@
     other messages
     **/
     _TimeoutManager.prototype.startTimeout = function() {
+      if (this.timeoutVariable) {
+        this.stopTimeout();
+      }
       this.timeoutVariable = setTimeout(function() {
         window.castReceiverManager.stop();
       }, this.timeoutDuration);
@@ -798,7 +801,10 @@
     Simply clear the timeout above
     **/
     _TimeoutManager.prototype.stopTimeout = function() {
-      clearTimeout(this.timeoutVariable);
+      if (this.timeoutVariable) {
+        clearTimeout(this.timeoutVariable);
+        this.timeoutVariable = null;
+      }
     }
 
     /**
@@ -828,7 +834,7 @@
       var pauseEvents = [ OO.EVENTS.PAUSED, OO.EVENTS.PLAY, OO.EVENTS.SEEK,
                           OO.EVENTS.CHANGE_VOLUME, OO.EVENTS.SET_EMBED_CODE ];
       var splashEvents = [ OO.EVENTS.PLAYED, OO.EVENTS.SET_EMBED_CODE ];
-      var loadingEvents = [ OO.EVENTS.SET_EMBED_CODE, OO.EVENTS.PLAY ];
+      var loadingEvents = [ OO.EVENTS.SET_EMBED_CODE, OO.EVENTS.PLAY, OO.EVENTS.INITIAL_PLAY, OO.EVENTS.CAN_PLAY ];
 
       // timeoutmanager instance to handle timeouts related to timing out on the splash screen
       var splashTimeout = new _TimeoutManager(SPLASH_SCREEN_TIMEOUT_MILLIS, splashEvents, player,
@@ -850,6 +856,8 @@
       function(evt) {
         switch (evt) {
           // If started playing, clear timeout
+          case OO.EVENTS.INITIAL_PLAY:
+          case OO.EVENTS.CAN_PLAY:
           case OO.EVENTS.PLAY:
             this.stopTimeout();
             break;
