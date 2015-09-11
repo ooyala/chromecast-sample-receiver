@@ -280,9 +280,9 @@
                   controls.showControls();
                 }
                 break;
-              case OO.EVENTS.PRELOAD_STREAM:
+              case OO.EVENTS.PLAYBACK_READY:
                 if (autoPlay) {
-                  // Controlled extention of loading screen display
+                  // Controlled extention of displaying loading screen, currently set to 3 seconds.  
                   setTimeout(function() {
                     player.mb.publish(OO.EVENTS.CAN_PLAY);
                   }, 3000);
