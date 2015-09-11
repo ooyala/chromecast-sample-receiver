@@ -79,6 +79,7 @@
     var titleElement = null;
     var descriptionElement = null;
 
+    var autoPlay = false;
     var controls = null;
     var rootElement = null;
 
@@ -246,6 +247,7 @@
       if (typeof playerParams['autoplay'] !== 'boolean') {
         playerParams['autoplay'] = true;
       }
+      autoPlay = playerParams['autoplay'];
       if (!!playerParams['ccLanguage']) {
         // player paramteres may contain ccLanguage: "en" (or other language), in which case
         // we should set up ccLanguage variable so that playback starts with closed captioning
@@ -276,6 +278,13 @@
                 // Re-initialize the elements to be in their initial position
                 if (controls) {
                   controls.showControls();
+                }
+                break;
+              case OO.EVENTS.PRELOAD_STREAM:
+                if (autoPlay) {
+                  setTimeout(function() {
+                    player.mb.publish(OO.EVENTS.CAN_PLAY);
+                  }, 3000);
                 }
                 break;
               case OO.EVENTS.STREAM_PLAYING:
@@ -379,6 +388,7 @@
         if (typeof playerParams['autoplay'] !== 'boolean') {
           playerParams['autoplay'] = true;
         }
+        autoPlay = playerParams['autoplay'];
         ccLanguage = '';
         if (!!playerParams['ccLanguage']) {
           // We should also check for closed captions-related player parameter on playback of next asset,
