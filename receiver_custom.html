@@ -79,6 +79,7 @@
     var titleElement = null;
     var descriptionElement = null;
 
+    var autoPlay = false;
     var controls = null;
     var rootElement = null;
 
@@ -191,14 +192,18 @@
             player.mb.publish(OO.EVENTS.PLAY);
             break;
           case "seek":
-            var seekTime = parseInt(message.data);
-            if (seekTime >= duration - 1) {
-              seekTime = (duration > 1) ? duration - 1 : 0;
+            if (player) {
+              var seekTime = parseInt(message.data);
+              if (seekTime >= duration - 1) {
+                seekTime = (duration > 1) ? duration - 1 : 0;
+              }
+              player.mb.publish(OO.EVENTS.SEEK, seekTime);
             }
-            player.mb.publish(OO.EVENTS.SEEK, seekTime);
             break;
           case "volume":
-            player.mb.publish(OO.EVENTS.CHANGE_VOLUME, parseFloat(message.data));
+            if (player) {
+              player.mb.publish(OO.EVENTS.CHANGE_VOLUME, parseFloat(message.data));
+            }
             break;
           case "setCCLanguage":
             setClosedCaptionsLanguage(message.data);
@@ -242,6 +247,7 @@
       if (typeof playerParams['autoplay'] !== 'boolean') {
         playerParams['autoplay'] = true;
       }
+      autoPlay = playerParams['autoplay'];
       if (!!playerParams['ccLanguage']) {
         // player paramteres may contain ccLanguage: "en" (or other language), in which case
         // we should set up ccLanguage variable so that playback starts with closed captioning
@@ -274,9 +280,20 @@
                   controls.showControls();
                 }
                 break;
+              case OO.EVENTS.PLAYBACK_READY:
+                if (autoPlay) {
+                  // Controlled extention of displaying loading screen, currently set to 3 seconds.  
+                  // ATTN: Receiver HAS TO publish CAN_PLAY in case of autoPlay
+                  setTimeout(function() {
+                    player.mb.publish(OO.EVENTS.CAN_PLAY);
+                  }, 3000);
+                } else {
+                  player.mb.publish(OO.EVENTS.CAN_PLAY);
+                }
+                break;
               case OO.EVENTS.STREAM_PLAYING:
                 // Show the player screen
-                screenController.showScreen(playerScreen, 3000, player, OO.EVENTS.PAUSE, OO.EVENTS.PLAY, "setClosedCaptionsLanguage(ccLanguage)");
+                screenController.showScreen(playerScreen, "setClosedCaptionsLanguage(ccLanguage)");
                 // Fade out the title, pause, labels, and the scrubber
                 // Passing in a specified delay for timing out the transition
                 controls.handleControlsTransition(controls.getDelayInMillis());
@@ -375,6 +392,7 @@
         if (typeof playerParams['autoplay'] !== 'boolean') {
           playerParams['autoplay'] = true;
         }
+        autoPlay = playerParams['autoplay'];
         ccLanguage = '';
         if (!!playerParams['ccLanguage']) {
           // We should also check for closed captions-related player parameter on playback of next asset,
@@ -455,7 +473,7 @@
     This function will make sure to only display the screen that is passed
     as the parameter while hiding the others
     **/
-    _ScreenController.prototype.showScreen = function(screenToShow, delay, player, action1, action2, callback) {
+    _ScreenController.prototype.showScreen = function(screenToShow, callback) {
       if (this.currentScreen === screenToShow) {
         // some events come up more than once, so we should ignore repeated requests 
         // as it may cause problems if to-be-performed actions are defined
@@ -468,18 +486,9 @@
         }
       }
 
-      if (!!delay && !!player && !!action1 && !!action2) {
-        // execute this code only if delay and player and both actions are defined
-        player.mb.publish(action1);
-
-        setTimeout(function() {
-          // execute this code only if player and both actions are defined
-          player.mb.publish(action2);
-          if (!!callback && typeof callback === 'string') {
-            eval(callback);
-          }
-        }, delay);
-      } 
+      if (!!callback && typeof callback === 'string') {
+        eval(callback);
+      }
 
       screenToShow.style.display = "block";
       this.currentScreen = screenToShow;
