@@ -152,9 +152,10 @@
     For more info on castMessageBus,
     visit: https://developers.google.com/cast/docs/reference/receiver/cast.receiver.CastMessageBus
     **/
-   function setupMessageBus() {
-      // create the namespaces
+    function setupMessageBus() {
+      // create message bus for google media commands
       window.mediaMB = castReceiverManager.getCastMessageBus(mediaNamespace);
+      // create message bus for communications between receiver and sender
       window.castMB = castReceiverManager.getCastMessageBus(namespace)
       // onMessage gets called every time the sender sends a message
       // It receives messages through google's message bus and will then
@@ -165,7 +166,6 @@
 
         // verify message 
         var message = null;
-        var requestId = '';
 
         if (evt && evt.data) {
           message = JSON.parse(evt.data);
@@ -173,7 +173,6 @@
             console.error(ERROR_MESSAGE);
             return;
           }
-          requestId = message.requestId;
         }
 
         if (debug) {
