@@ -59,7 +59,12 @@
     var PAUSE_STATE_TIMEOUT_MILLIS = 5 * 60 * 1000;
 
     window.castReceiverManager = null;
+    window.mediaMB = null;
     window.castMB = null;
+    var debug = false;
+
+    var mediaNamespace = "urn:x-cast:com.google.cast.media";
+    var namespace = "urn:x-cast:ooyala";
 
     var initialTimeout = null;
     var player = null;
@@ -121,6 +126,9 @@
 
       window.castReceiverManager.onSenderConnected = function(event) {
         senders = window.castReceiverManager.getSenders();
+        if (debug) {
+          console.log("***** connected senders:", JSON.stringify(senders));
+        }
       }
 
       window.castReceiverManager.onSenderDisconnected = function(event) {
@@ -144,81 +152,87 @@
     For more info on castMessageBus,
     visit: https://developers.google.com/cast/docs/reference/receiver/cast.receiver.CastMessageBus
     **/
-    function setupMessageBus() {
-      // create the namespace
-      window.castMB = castReceiverManager.getCastMessageBus("urn:x-cast:ooyala");
+   function setupMessageBus() {
+      // create the namespaces
+      window.mediaMB = castReceiverManager.getCastMessageBus(mediaNamespace);
+      window.castMB = castReceiverManager.getCastMessageBus(namespace)
       // onMessage gets called every time the sender sends a message
       // It receives messages through google's message bus and will then
       // publish events to ooyala core player message bus
-      window.castMB.onMessage = function(evt) {
+      window.mediaMB.onMessage = function(evt) {
         // Adds error handling to the received messages
-        var message = null;
         var ERROR_MESSAGE = "Exception in message format";
 
         // verify message 
-        var success = true;
         var message = null;
+        var requestId = '';
+
         if (evt && evt.data) {
           message = JSON.parse(evt.data);
-          if (!message || !message.action) {
-            success = false;
-          } else if ((message.action == "init" || message.action == "seek" || message.acton == "volume") && !message.data) {             
-            success = false;
+          if (!message.type) {
+            console.error(ERROR_MESSAGE);
+            return;
           }
-        }
-        if (!success) {
-          console.error(ERROR_MESSAGE);
-          return;
+          requestId = message.requestId;
         }
 
-        switch (message.action) {
-          case "init":
+        if (debug) {
+          console.log("******** received message", JSON.stringify(message, null, '\t'));
+        }
+
+        switch (message.type) {
+            case "LOAD":
+            if (!message.media || !message.media.customData) {
+              console.error(ERROR_MESSAGE);
+            }
             // This method will handle the loading screen elements passed by the
             // sender to be displayed on the loading screen
-            handleLoadingScreenInfo(message.data);
+            handleLoadingScreenInfo(message.media.customData);
             // For first time setup, load the Ooyala player
             // Otherwise, simply set the embed code
             if (!hasBeenInitialized) {
               screenController.showScreen(splashScreen);
-              initPlayer(message.data);
+              initPlayer(message.media.customData);
             } else {
-              reinitPlayer(message.data);
+              reinitPlayer(message.media.customData);
             }
             break;
-          case "pause":
+          case "PAUSE":
             player.mb.publish(OO.EVENTS.PAUSE);
             break;
-          case "play":
+          case "PLAY":
             player.mb.publish(OO.EVENTS.PLAY);
             break;
-          case "seek":
+          case "SEEK":
             if (player) {
-              var seekTime = parseInt(message.data);
+              var seekTime = parseInt(message.currentTime);
               if (seekTime >= duration - 1) {
                 seekTime = (duration > 1) ? duration - 1 : 0;
               }
               player.mb.publish(OO.EVENTS.SEEK, seekTime);
             }
             break;
-          case "volume":
+          case "SET_VOLUME":
             if (player) {
-              player.mb.publish(OO.EVENTS.CHANGE_VOLUME, parseFloat(message.data));
+              player.mb.publish(OO.EVENTS.CHANGE_VOLUME, parseFloat(message.volume));
             }
             break;
-          case "setCCLanguage":
-            setClosedCaptionsLanguage(message.data);
-            break;
-          case "getstatus":
-            // if status is requested, return the state, playhead, and embedcode
-            var status = {
-              state: player.getState(),
-              playhead: currentPlayheadTimeInfo,
-              embed: currentEmbedCode
+          case "GET_STATUS":
+            if (message.customData && message.customData.action) {
+              if (message.customData.action === "setCCLanguage") {
+                setClosedCaptionsLanguage(message.customData.data);
+              } else if (message.customData.action === "getStatus") {
+                var status = {
+                  state: player.getState(),
+                  playhead: currentPlayheadTimeInfo,
+                  embed: currentEmbedCode
+                }
+                // only send the status back to the sender that requested it
+                window.castMB.send(evt.senderId, JSON.stringify(status));
+              }
             }
-            // only send the status back to the sender that requested it
-            window.castMB.send(evt.senderId, JSON.stringify(status));
             break;
-          case "stop" :
+          case "STOP" :
             window.castReceiverManager.stop();
             break;
         }
@@ -229,7 +243,7 @@
     This initPlayer will be called when the sender sends the init call
     It will load Ooyala player and subscribe to all events that the player publishes
     **/
-    function initPlayer(data) {
+   function initPlayer(data) {
       // Clear the initial timeout set to timeout on the splash screen
       if (data && data.ec) {
         clearTimeout(initialTimeout);
@@ -238,22 +252,34 @@
       hasBeenInitialized = true;
       currentEmbedCode = data.ec;
 	
+      // Change the PlayerBrandingID here
+      var pbid = (data && data.pbid) ? data.pbid : "283b128fe1c24bc2ad3fc76a07cef963";
+      // Change the V3 version here
+      var v3Version = (data && data.version) ? "version=" + data.version : "version=4f18e79abadaf7829a23bee44ea08cb8e3948636";
+
       // prepare the player load script
-      var debug = data.debug;
+      debug = data.debug;
       var playerJs = document.createElement("script");
       playerJs.type = "text/javascript";
       playerJs.src = OOYALA_PLAYER_URL + (debug? "&debug=true" : "");
-      var playerParams = (!data.params) ? {} : eval("(" + data.params + ")");
+      var playerParams = {};
+      if (data.params) {
+        if (typeof data.params === "string") {
+          playerParams = eval("(" + data.params + ")");
+        } else if (typeof data.params === "object") {
+          playerParams = data.params;
+        }
+      }
       if (typeof playerParams['autoplay'] !== 'boolean') {
         playerParams['autoplay'] = true;
       }
       autoPlay = playerParams['autoplay'];
+      ccLanguage = '';
       if (!!playerParams['ccLanguage']) {
         // player paramteres may contain ccLanguage: "en" (or other language), in which case
         // we should set up ccLanguage variable so that playback starts with closed captioning
         ccLanguage = playerParams['ccLanguage'];
       }
-
       if (!playerParams.onCreate) {
         playerParams.onCreate = function(player) {
           player.mb.subscribe("*", "chromecast", function(evt) {
@@ -331,8 +357,11 @@
                 break;
               case OO.EVENTS.AUTHORIZATION_FETCHED:
                 if (arguments[1].streams[0].is_live_stream) {
+                  console.log("***** Live stream:", JSON.stringify(arguments[1].streams[0].delivery_type));
                   isLiveStream = true;
-                } 
+                } else {
+                  console.log("***** Stream type:", JSON.stringify(arguments[1].streams[0].delivery_type));
+                }
                 break;
               case OO.EVENTS.CONTENT_TREE_FETCHED:
                 // We should clear closed captions resource map as it may be populated from
@@ -367,6 +396,9 @@
                 displayErrorTitleDescription(error);
                 break;
             }
+            if (debug && evt && evt !== "playheadTimeChanged") {
+              //console.log("receiver.html", evt, JSON.stringify(arguments, null, '\t'));
+            }
             // send the arguments to all of the senders so that they can update
             sendToAllSenders(JSON.stringify(arguments));
           });
@@ -388,7 +420,15 @@
         currentEmbedCode = data.ec;
         isLiveStream = false;
         duration = 0;
-        var playerParams = (!data.params) ? {} : eval("(" + data.params + ")");
+        var playerParams = {};
+        if (data.params) {
+          if (typeof data.params === "string") {
+            playerParams = eval("(" + data.params + ")");
+          } else if (typeof data.params === "object") {
+            playerParams = data.params;
+          }
+        }
+        console.log("*********** playerParams2", playerParams, JSON.stringify(playerParams));
         if (typeof playerParams['autoplay'] !== 'boolean') {
           playerParams['autoplay'] = true;
         }
@@ -640,7 +680,6 @@
       this.scrubberFadeElements = [ this.playheadLabel, this.durationLabel, this.seekContainer ];
       this.controlsFadeElements = [ this.playheadLabel, this.durationLabel, this.seekContainer,
                                     this.pauseIcon, this.videoTitle, this.promoIcon ];
-
       this.showControls();
     }
 
