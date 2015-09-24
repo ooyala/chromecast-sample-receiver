@@ -28,40 +28,54 @@
 
       playerJs.onload = (function() {
         window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
-        window.castMB = window.castReceiverManager.getCastMessageBus("urn:x-cast:ooyala");
+        window.castMB = window.castReceiverManager.getCastMessageBus("urn:x-cast:com.google.cast.media");
         // onMessage gets called every time the sender sends a message
         // It receives messages through google's message bus and will then
         // publish events to ooyala core player message bus
         window.castMB.onMessage = function(evt) {
           // Adds error handling to the received messages
           var message = null;
-          var ERROR_MESSAGE = "Exception in message format";
+            var ERROR_MESSAGE = "Exception in message format";
+            console.log(JSON.stringify(evt, null, '\t'));
 
-          var success = false;
-          if (!!evt && !!evt.data) {
-            var message = JSON.parse(evt.data);
-            if (!!message.action && message.action === "init" && !!message.data) {
-              var data = message.data;
-              var playerParams = (!data.params) ? {} : eval("(" + data.params + ")");
-              if (typeof playerParams['autoplay'] !== 'boolean') {
-                playerParams['autoplay'] = true;
-              }
-              playerParams['splashScreen'] = SPLASH_SCREEN_SRC;
-              playerParams['logoImage'] = LOGO_IMAGE_SRC;
-              playerParams['pauseIcon'] = PAUSE_ICON_SRC;
-              playerParams['watermarkIcon'] = WATERMARK_ICON_SRC;
-              var player = OO.Player.create('player', data.ec, playerParams);
-              player.mb.publish(OO.EVENTS.CHROMECAST_INIT, message);
-              success = true;
-            } else {
-              // we shouldn't get here, message bus will be intercepted by cast_receiver after init
-              console.log("******** Unprocessed message:", JSON.stringify(message));
+          if (evt && evt.data) {
+            message = JSON.parse(evt.data);
+            if (!message.type) {
+              console.error(ERROR_MESSAGE);
+              return;
+            }
+            if (message.type == "GET_STATUS") {
+              // very first incoming message upon creation of message bus is GET_STATUS,
+              // it should be ignored here
+              return;
+            }
+            if (!message.media || !message.media.customData) {
+              // message to load media is the second incoming message after GET_STATUS (see above)
+              // this will be the only one mesasage going through this channel, all subsequest messages
+              // will be going through player's CastReceiverModule
+              console.error(ERROR_MESSAGE);
             }
           }
-          if (!success) {
-            console.log(ERROR_MESSAGE);
+
+          var data = message.media.customData;
+          var playerParams = {};
+          if (data.params) {
+            if (typeof data.params === "string") {
+              playerParams = eval("(" + data.params + ")");
+            } else if (typeof data.params === "object") {
+              playerParams = data.params;
+            }
           }
-        };
+          if (typeof playerParams['autoplay'] !== 'boolean') {
+            playerParams['autoplay'] = true;
+          }
+          playerParams['splashScreen'] = SPLASH_SCREEN_SRC;
+          playerParams['logoImage'] = LOGO_IMAGE_SRC;
+          playerParams['pauseIcon'] = PAUSE_ICON_SRC;
+          playerParams['watermarkIcon'] = WATERMARK_ICON_SRC;
+          var player = OO.Player.create('player', data.ec, playerParams);
+          player.mb.publish(OO.EVENTS.CHROMECAST_INIT, data);
+        }
       });
       document.head.appendChild(playerJs);
     }
