@@ -351,11 +351,8 @@
                 break;
               case OO.EVENTS.AUTHORIZATION_FETCHED:
                 if (arguments[1].streams[0].is_live_stream) {
-                  console.log("***** Live stream:", JSON.stringify(arguments[1].streams[0].delivery_type));
                   isLiveStream = true;
-                } else {
-                  console.log("***** Stream type:", JSON.stringify(arguments[1].streams[0].delivery_type));
-                }
+                } 
                 break;
               case OO.EVENTS.CONTENT_TREE_FETCHED:
                 // We should clear closed captions resource map as it may be populated from
@@ -389,9 +386,6 @@
 
                 displayErrorTitleDescription(error);
                 break;
-            }
-            if (debug && evt && evt !== "playheadTimeChanged") {
-              //console.log("receiver.html", evt, JSON.stringify(arguments, null, '\t'));
             }
             // send the arguments to all of the senders so that they can update
             sendToAllSenders(JSON.stringify(arguments));
