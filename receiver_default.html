@@ -45,7 +45,8 @@
             }
             if (message.type == "GET_STATUS") {
               // very first incoming message upon creation of message bus is GET_STATUS,
-              // it should be ignored here
+              // it should be ignored, all subsequent GET_STATUS messages will be going
+              // though CastReceiverModule's message bus
               return;
             }
             if (!message.media || !message.media.customData) {
@@ -53,6 +54,7 @@
               // this will be the only one mesasage going through this channel, all subsequest messages
               // will be going through player's CastReceiverModule
               console.error(ERROR_MESSAGE);
+              return;
             }
           }
 
