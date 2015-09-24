@@ -217,22 +217,42 @@
             }
             break;
           case "GET_STATUS":
-            if (message.customData && message.customData.action) {
-              if (message.customData.action === "setCCLanguage") {
-                setClosedCaptionsLanguage(message.customData.data);
-              } else if (message.customData.action === "getStatus") {
-                var status = {
-                  state: player.getState(),
-                  playhead: currentPlayheadTimeInfo,
-                  embed: currentEmbedCode
-                }
-                // only send the status back to the sender that requested it
-                window.castMB.send(evt.senderId, JSON.stringify(status));
+            if (player) {
+              var status = {
+                state: player.getState(),
+                playhead: currentPlayheadTimeInfo,
+                embed: currentEmbedCode
               }
+              // only send the status back to the sender that requested it
+              window.castMB.send(evt.senderId, JSON.stringify(status));
             }
             break;
           case "STOP" :
             window.castReceiverManager.stop();
+            break;
+        }
+      }
+
+      // onMessage gets called every time the sender sends a message
+      // It receives messages through ooyala's message bus 
+      window.castMB.onMessage = function(evt) {
+        // Adds error handling to the received messages
+        var message = null;
+        var ERROR_MESSAGE = "Exception in message format";
+
+        // verify message 
+        var message = null;
+        if (evt && evt.data) {
+          message = JSON.parse(evt.data);
+          if (!message || !message.action) {
+            console.error(ERROR_MESSAGE);
+            return;
+          }
+        }
+
+        switch (message.action) {
+          case "setCCLanguage":
+            setClosedCaptionsLanguage(message.data);
             break;
         }
       }
