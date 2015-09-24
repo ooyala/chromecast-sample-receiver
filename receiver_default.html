@@ -35,8 +35,7 @@
         window.castMB.onMessage = function(evt) {
           // Adds error handling to the received messages
           var message = null;
-            var ERROR_MESSAGE = "Exception in message format";
-            console.log(JSON.stringify(evt, null, '\t'));
+          var ERROR_MESSAGE = "Exception in message format";
 
           if (evt && evt.data) {
             message = JSON.parse(evt.data);
