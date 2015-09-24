@@ -251,11 +251,6 @@
       hasBeenInitialized = true;
       currentEmbedCode = data.ec;
 	
-      // Change the PlayerBrandingID here
-      var pbid = (data && data.pbid) ? data.pbid : "283b128fe1c24bc2ad3fc76a07cef963";
-      // Change the V3 version here
-      var v3Version = (data && data.version) ? "version=" + data.version : "version=4f18e79abadaf7829a23bee44ea08cb8e3948636";
-
       // prepare the player load script
       debug = data.debug;
       var playerJs = document.createElement("script");
