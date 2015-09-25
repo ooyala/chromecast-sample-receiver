@@ -947,6 +947,15 @@
     You are welcomed to change the error messaging here.
     **/
     function displayErrorTitleDescription(error) {
+      if (error.code) {
+        if (error.description) {
+          sendToAllSenders(JSON.stringify({error: { code: error.code, description: error.description}}));
+        } else {
+          sendToAllSenders(JSON.stringify({error: { code: error}}));
+        }
+        return;
+      }
+
       var defaultErrorTitle = "There Is an Error";
       var defaultErrorDescription = "Please Restart Your Application";
 
