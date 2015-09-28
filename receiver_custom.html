@@ -947,17 +947,21 @@
     You are welcomed to change the error messaging here.
     **/
     function displayErrorTitleDescription(error) {
+      var defaultErrorTitle = "There Is an Error";
+      var defaultErrorDescription = "Please Restart Your Application";
+
       if (error.code) {
+        // in case error came from cast.media API calls, forward it to senders
         if (error.description) {
           sendToAllSenders(JSON.stringify({error: { code: error.code, description: error.description}}));
         } else {
           sendToAllSenders(JSON.stringify({error: { code: error}}));
         }
+
+        document.querySelector("#error_title").innerHTML = errorTitle;
+        document.querySelector("#error_description").innerHTML = defaultErrorDescription;
         return;
       }
-
-      var defaultErrorTitle = "There Is an Error";
-      var defaultErrorDescription = "Please Restart Your Application";
 
       // Create mapping of Ooyala errors to error messages
       var errorMap = {};
