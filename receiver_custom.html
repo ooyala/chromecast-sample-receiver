@@ -1,7 +1,8 @@
 <html>
 <head>
   <title>Chromecast Customized Receiver</title>
-  <script src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
+  <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
+  <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/mediaplayer/1.0.0/media_player.js"></script>
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 
   <link rel="shortcut icon" href="./images/favicon.ico" />
@@ -36,8 +37,9 @@
     </div>
   </div>
 
-  <div id='player'></div>
-
+  <div id='player'>
+      <video id="tmp_video"></video>
+  </div>
   <div id="error_screen">
     <div id="error_container" class="absolute_center">
       <h1 id= "error_title" class ="cast_text" style="text-transform:uppercase"></h1>
@@ -47,7 +49,6 @@
   <script>
     // constants
     var OOYALA_PLAYER_URL = "//player.ooyala.com/v3/283b128fe1c24bc2ad3fc76a07cef963?version=28c0adb1084aef6d3de89265cf07a71a555ffa39";
-
     var SPLASH_SCREEN_SRC = "./images/ooyala-logo.png";
     var LOGO_IMAGE_SRC = "./images/ooyala-logo.png";
     var PAUSE_ICON_SRC = " ./images/pause.png";
@@ -61,6 +62,10 @@
     window.castReceiverManager = null;
     window.mediaMB = null;
     window.castMB = null;
+    window.mediaManager = null;
+
+    var mediaElement = null;
+    var mediaStatus = null;
     var debug = false;
 
     var mediaNamespace = "urn:x-cast:com.google.cast.media";
@@ -87,7 +92,7 @@
     var autoPlay = false;
     var controls = null;
     var rootElement = null;
-
+   
     // Screen related variables
     var screenController = null;
     var screens = null;
@@ -103,6 +108,7 @@
     // Initialize Chromecast receiver application
     window.onload = function() {
       cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.DEBUG);
+      setupMediaManager();
       setupCastReceiver();
       setupMessageBus();
       window.castReceiverManager.start();
@@ -113,6 +119,88 @@
         window.castReceiverManager.stop();
       }, SPLASH_SCREEN_TIMEOUT_MILLIS);
     }
+
+   function setupMediaManager() {
+     mediaElement = document.getElementById('tmp_video');
+     window.mediaManager = new cast.receiver.MediaManager(mediaElement);
+
+     window.mediaManager.onLoad = onLoad.bind(this);
+     window.mediaManager.onPause = onPause.bind(this);
+     window.mediaManager.onPlay = onPlay.bind(this);
+     window.mediaManager.onSeek = onSeek.bind(this);
+     window.mediaManager.onSetVolume = onSetVolume.bind(this);
+     window.mediaManager.onGetStatus = onGetStatus.bind(this);
+     window.mediaManager.onStop = onStop.bind(this);
+     window.mediaManager.customizedStatusCallback = customizedStatusCallback.bind(this);
+   }
+
+   function onPause(event) {
+     console.log("****************** onPause", event.type);
+     player.mb.publish(OO.EVENTS.PAUSE);
+   }
+
+   function onPlay(event) {
+     console.log("****************** onPlay", event.type);
+     player.mb.publish(OO.EVENTS.PLAY);
+   }
+
+   function onSeek(event) {
+     var seekTime = parseInt(event.data.currentTime);
+     if (seekTime >= duration - 1) {
+       seekTime = (duration > 1) ? duration - 1 : 0;
+     }
+     console.log("****************** onSeek", seekTime);
+     player.mb.publish(OO.EVENTS.SEEK, seekTime);
+   }
+
+   function onSetVolume(event) {
+     var volume = event.data.volume.level;
+     console.log("****************** onSetVolume", volume);
+     player.mb.publish(OO.EVENTS.CHANGE_VOLUME, volume);
+   }
+
+   function onGetStatus(event) {
+     if (player) {
+         console.log("****************** onGetStatus for media session", event.data.mediaSessionId);
+         var status = {
+             state: player.getState(),
+             playhead: currentPlayheadTimeInfo,
+             embed: currentEmbedCode,
+             mediaStatus: mediaStatus
+         }
+         // only send the status back to the sender that requested it
+         window.castMB.send(event.senderId, JSON.stringify(status));
+     }
+   }
+
+   function onStop(event) {
+     console.log("****************** onStop", event);
+     window.mediaManager.resetMediaElement(cast.receiver.media.CANCELLED, true);
+   }
+
+   function customizedStatusCallback(ms) {
+     mediaStatus = ms;
+     sendToAllSenders(JSON.stringify(mediaStatus));
+   }
+
+   function onLoad(event) {
+     console.log('**************** onLoad', JSON.stringify(event.data, null, '\t'));
+     handleLoadingScreenInfo(event.data.media.customData);
+     // For first time setup, load the Ooyala player
+     // Otherwise, simply set the embed code
+     if (!hasBeenInitialized) {
+       screenController.showScreen(splashScreen);
+       initPlayer(event.data.media.customData);
+     } else {
+       reinitPlayer(event.data.media.customData);
+     }
+
+     $("#tmp_video").remove();
+
+     //this.load(new cast.receiver.MediaManager.LoadInfo(
+     /** @type {!cast.receiver.MediaManager.LoadRequestData} */ //(event.data),
+     //event.senderId));
+   }
 
     /**
     Get the instance of the cast receiver
@@ -153,86 +241,9 @@
     visit: https://developers.google.com/cast/docs/reference/receiver/cast.receiver.CastMessageBus
     **/
     function setupMessageBus() {
-      // create message bus for google media commands
-      window.mediaMB = castReceiverManager.getCastMessageBus(mediaNamespace);
       // create message bus for communications between receiver and sender
       window.castMB = castReceiverManager.getCastMessageBus(namespace)
-      // onMessage gets called every time the sender sends a message
-      // It receives messages through google's message bus and will then
-      // publish events to ooyala core player message bus
-      window.mediaMB.onMessage = function(evt) {
-        // Adds error handling to the received messages
-        var ERROR_MESSAGE = "Exception in message format";
-
-        // verify message 
-        var message = null;
-
-        if (evt && evt.data) {
-          message = JSON.parse(evt.data);
-          if (!message.type) {
-            console.error(ERROR_MESSAGE);
-            return;
-          }
-        }
-
-        if (debug) {
-          console.log("******** received message", JSON.stringify(message, null, '\t'));
-        }
-
-        switch (message.type) {
-            case "LOAD":
-            if (!message.media || !message.media.customData) {
-              console.error(ERROR_MESSAGE);
-            }
-            // This method will handle the loading screen elements passed by the
-            // sender to be displayed on the loading screen
-            handleLoadingScreenInfo(message.media.customData);
-            // For first time setup, load the Ooyala player
-            // Otherwise, simply set the embed code
-            if (!hasBeenInitialized) {
-              screenController.showScreen(splashScreen);
-              initPlayer(message.media.customData);
-            } else {
-              reinitPlayer(message.media.customData);
-            }
-            break;
-          case "PAUSE":
-            player.mb.publish(OO.EVENTS.PAUSE);
-            break;
-          case "PLAY":
-            player.mb.publish(OO.EVENTS.PLAY);
-            break;
-          case "SEEK":
-            if (player) {
-              var seekTime = parseInt(message.currentTime);
-              if (seekTime >= duration - 1) {
-                seekTime = (duration > 1) ? duration - 1 : 0;
-              }
-              player.mb.publish(OO.EVENTS.SEEK, seekTime);
-            }
-            break;
-          case "SET_VOLUME":
-            if (player) {
-              player.mb.publish(OO.EVENTS.CHANGE_VOLUME, parseFloat(message.volume));
-            }
-            break;
-          case "GET_STATUS":
-            if (player) {
-              var status = {
-                state: player.getState(),
-                playhead: currentPlayheadTimeInfo,
-                embed: currentEmbedCode
-              }
-              // only send the status back to the sender that requested it
-              window.castMB.send(evt.senderId, JSON.stringify(status));
-            }
-            break;
-          case "STOP" :
-            window.castReceiverManager.stop();
-            break;
-        }
-      }
-
+        
       // onMessage gets called every time the sender sends a message
       // It receives messages through ooyala's message bus 
       window.castMB.onMessage = function(evt) {
@@ -271,6 +282,11 @@
       hasBeenInitialized = true;
       currentEmbedCode = data.ec;
 	
+      // Change the PlayerBrandingID here
+      var pbid = (data && data.pbid) ? data.pbid : "283b128fe1c24bc2ad3fc76a07cef963";
+      // Change the V3 version here
+      var v3Version = (data && data.version) ? "version=" + data.version : "version=4f18e79abadaf7829a23bee44ea08cb8e3948636";
+
       // prepare the player load script
       debug = data.debug;
       var playerJs = document.createElement("script");
@@ -347,6 +363,11 @@
               case OO.EVENTS.PLAYER_CREATED:
                 // Assign the root element and controls when player is created
                 rootElement = document.querySelector(".innerWrapper");
+                mediaElement = document.getElementsByClassName('video');
+                console.log("************** new mediaElement", mediaElement[0]);
+                window.mediaManager.setMediaElement(mediaElement[0]);
+                window.mediaManager.broadcastStatus(true);
+
                 controls = new _Controls(rootElement);
                 // Handling timeouts
                 handleReceiverTimeouts(player);
@@ -371,8 +392,11 @@
                 break;
               case OO.EVENTS.AUTHORIZATION_FETCHED:
                 if (arguments[1].streams[0].is_live_stream) {
+                  console.log("***** Live stream:", JSON.stringify(arguments[1].streams[0].delivery_type));
                   isLiveStream = true;
-                } 
+                } else {
+                  console.log("***** Stream type:", JSON.stringify(arguments[1].streams[0].delivery_type));
+                }
                 break;
               case OO.EVENTS.CONTENT_TREE_FETCHED:
                 // We should clear closed captions resource map as it may be populated from
@@ -407,18 +431,21 @@
                 displayErrorTitleDescription(error);
                 break;
             }
+            if (debug && evt && evt !== "playheadTimeChanged") {
+              //console.log("receiver.html", evt, JSON.stringify(arguments, null, '\t'));
+            }
             // send the arguments to all of the senders so that they can update
             sendToAllSenders(JSON.stringify(arguments));
           });
         }
-      }
+      } 
 
       // when the script has loaded, create the player
       playerJs.onload = (function(data) {
         player = OO.Player.create('player', data.ec, playerParams);
       }).bind(this, data);
       document.head.appendChild(playerJs);
-    }
+   }
 
     /**
     Sets the embed code of the player with the parameters
@@ -1013,7 +1040,7 @@
 
       // Set the DOM elements to its respective title and description
       document.querySelector("#error_title").innerHTML = errorTitle;
-      document.querySelector("#error_description").innerHTML = errorDescription;
+      document.querySelector("#error_description").innerHTML = errorDesc<script 
     }
   </script>
 </body>
