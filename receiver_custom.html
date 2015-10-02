@@ -59,12 +59,10 @@
     var PAUSE_STATE_TIMEOUT_MILLIS = 5 * 60 * 1000;
 
     window.castReceiverManager = null;
-    window.mediaMB = null;
     window.castMB = null;
     window.mediaManager = null;
 
     var mediaElement = null;
-    var mediaStatus = null;
     var debug = false;
 
     var mediaNamespace = "urn:x-cast:com.google.cast.media";
@@ -91,7 +89,7 @@
     var autoPlay = false;
     var controls = null;
     var rootElement = null;
-   
+
     // Screen related variables
     var screenController = null;
     var screens = null;
@@ -128,19 +126,16 @@
      window.mediaManager.onPlay = onPlay.bind(this);
      window.mediaManager.onSeek = onSeek.bind(this);
      window.mediaManager.onSetVolume = onSetVolume.bind(this);
-     window.mediaManager.onGetStatus = onGetStatus.bind(this);
-     window.mediaManager.onStop = onStop.bind(this);
-     window.mediaManager.customizedStatusCallback = customizedStatusCallback.bind(this);
    }
 
    function onPause(event) {
-     console.log("****************** onPause", event.type);
      player.mb.publish(OO.EVENTS.PAUSE);
+     window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
    }
 
    function onPlay(event) {
-     console.log("****************** onPlay", event.type);
      player.mb.publish(OO.EVENTS.PLAY);
+     window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
    }
 
    function onSeek(event) {
@@ -148,42 +143,17 @@
      if (seekTime >= duration - 1) {
        seekTime = (duration > 1) ? duration - 1 : 0;
      }
-     console.log("****************** onSeek", seekTime);
      player.mb.publish(OO.EVENTS.SEEK, seekTime);
+     window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
    }
 
    function onSetVolume(event) {
      var volume = event.data.volume.level;
-     console.log("****************** onSetVolume", volume);
      player.mb.publish(OO.EVENTS.CHANGE_VOLUME, volume);
-   }
-
-   function onGetStatus(event) {
-     if (player) {
-         console.log("****************** onGetStatus for media session", event.data.mediaSessionId);
-         var status = {
-             state: player.getState(),
-             playhead: currentPlayheadTimeInfo,
-             embed: currentEmbedCode,
-             mediaStatus: mediaStatus
-         }
-         // only send the status back to the sender that requested it
-         window.castMB.send(event.senderId, JSON.stringify(status));
-     }
-   }
-
-   function onStop(event) {
-     console.log("****************** onStop", event);
-     window.mediaManager.resetMediaElement(cast.receiver.media.CANCELLED, true);
-   }
-
-   function customizedStatusCallback(ms) {
-     mediaStatus = ms;
-     sendToAllSenders(JSON.stringify(mediaStatus));
+     window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
    }
 
    function onLoad(event) {
-     console.log('**************** onLoad', JSON.stringify(event.data, null, '\t'));
      handleLoadingScreenInfo(event.data.media.customData);
      // For first time setup, load the Ooyala player
      // Otherwise, simply set the embed code
@@ -194,11 +164,8 @@
        reinitPlayer(event.data.media.customData);
      }
 
+     window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
      $("#tmp_video").remove();
-
-     //this.load(new cast.receiver.MediaManager.LoadInfo(
-     /** @type {!cast.receiver.MediaManager.LoadRequestData} */ //(event.data),
-     //event.senderId));
    }
 
     /**
@@ -365,7 +332,6 @@
                 mediaElement = document.getElementsByClassName('video');
                 console.log("************** new mediaElement", mediaElement[0]);
                 window.mediaManager.setMediaElement(mediaElement[0]);
-                window.mediaManager.broadcastStatus(true);
 
                 controls = new _Controls(rootElement);
                 // Handling timeouts
@@ -1039,7 +1005,7 @@
 
       // Set the DOM elements to its respective title and description
       document.querySelector("#error_title").innerHTML = errorTitle;
-      document.querySelector("#error_description").innerHTML = errorDesc<script 
+      document.querySelector("#error_description").innerHTML = errorDescription;
     }
   </script>
 </body>
