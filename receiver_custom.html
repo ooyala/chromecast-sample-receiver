@@ -61,8 +61,11 @@
     window.castReceiverManager = null;
     window.castMB = null;
     window.mediaManager = null;
-
+    window.mediaSessionId = 0;
+    window.sessionId = "";
+   
     var mediaElement = null;
+    var currentURL = '';
     var debug = false;
 
     var mediaNamespace = "urn:x-cast:com.google.cast.media";
@@ -121,49 +124,120 @@
      mediaElement = document.getElementById('tmp_video');
      window.mediaManager = new cast.receiver.MediaManager(mediaElement);
 
+     window.mediaManager.onGetStatus = onGetStatus.bind(this);
+     window.mediaManager.onPreload = onPreload.bind(this);
      window.mediaManager.onLoad = onLoad.bind(this);
+     window.mediaManager.onPauseOrig = window.mediaManager.onPause;
      window.mediaManager.onPause = onPause.bind(this);
+     window.mediaManager.onPlayOrig = window.mediaManager.onPlay;
      window.mediaManager.onPlay = onPlay.bind(this);
+     window.mediaManager.onSeekOrig = window.mediaManager.onSeek;
      window.mediaManager.onSeek = onSeek.bind(this);
+     window.mediaManager.onSetVolumeOrig = window.mediaManager.onSetVolume;
      window.mediaManager.onSetVolume = onSetVolume.bind(this);
+     window.mediaManager.onQueueEndedOrig = window.mediaManager.onQueueEnded;
+       //window.mediaManager.onQueueEnded = onQueueEnded.bind(this);
+     window.mediaManager.onEndedOrig = window.mediaManager.onEnded;
+     window.mediaManager.onEnded = onEnded.bind(this);
+     window.mediaManager.onErrorOrig = window.mediaManager.onError;
+     window.mediaManager.onError = onError.bind(this);
+     window.mediaManager.customizedStatusCallback = customizedStatusCallback.bind(this);
+   }
+
+   function customizedStatusCallback(ms) {
+     window.mediaSessionId = ms.mediaSessionId;
+     console.log("********** customizedStatusCallback", JSON.stringify(ms, null, '\t'));
+     return ms;
+   }
+   
+   function onGetStatus(event) {
+     console.log("********** onGetStatus", JSON.stringify(event, null, '\t'));
+     window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
    }
 
    function onPause(event) {
+     console.log("********** onPause", JSON.stringify(event, null, '\t'));
+     window.mediaManager.onPauseOrig(event);
      player.mb.publish(OO.EVENTS.PAUSE);
      window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
    }
 
    function onPlay(event) {
-     player.mb.publish(OO.EVENTS.PLAY);
+     console.log("********** onPlay", JSON.stringify(event, null, '\t'));
+     window.mediaManager.onPlayOrig(event);
+     player.mb.publish(OO.EVENTS.INITIAL_PLAY);
      window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
    }
 
    function onSeek(event) {
+     console.log("********** onSeek", JSON.stringify(event, null, '\t'));
      var seekTime = parseInt(event.data.currentTime);
      if (seekTime >= duration - 1) {
        seekTime = (duration > 1) ? duration - 1 : 0;
      }
-     player.mb.publish(OO.EVENTS.SEEK, seekTime);
+     //player.mb.publish(OO.EVENTS.SEEK, seekTime);
+     window.mediaManager.onSeekOrig(event);
      window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
    }
 
    function onSetVolume(event) {
+     console.log("********** onSetVolume", JSON.stringify(event, null, '\t'));
+     window.mediaManager.onSetVolumeOrig(event);
      var volume = event.data.volume.level;
      player.mb.publish(OO.EVENTS.CHANGE_VOLUME, volume);
      window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
    }
 
+   function onQueueEnded(idleReason, requestId) {
+       console.log("********** onQueueEnded", idleReason, requestId);
+       window.mediaManager.resetMediaElement("INTERRUPTED");
+       window.mediaManager.bradcastStatus(true);
+       //window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
+   }
+
+   function onEnded() {
+       console.log("********** onEnded", mediaElement.src);
+       window.mediaManager.onEndedOrig();
+       //window.mediaManager.bradcastStatus(true);
+       //mediaElement.src = currentURL;
+       //mediaElement.load();
+       
+       //var evt = new cast.receiver.MediaManager.Event;
+       //evt.type = "seek";
+       //evt.data = { "currentTime": 0, "mediaSessionId": window.mediaSessionId, "sessionId": window.sessionId }
+       //window.mediaManager.onSeek(evt);
+       //evt.data = loadData;
+   }
+
+   function onError(event) {
+     console.log("********** onError", JSON.stringify(event, null, '\t'));
+   }
+
+   function onPreload(event) {
+     console.log("********** onPreload", JSON.stringify(event, null, '\t'));
+     window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
+
+           //var evt = new cast.receiver.MediaManager.Event;
+           //evt.data = { "currentTime": 0, "mediaSessionId": window.mediaSessionId, "sessionId": window.sessionId }
+           //evt.type = "seek";
+       //window.mediaManager.onSeek(evt);
+       
+     return true;
+   }
+
    function onLoad(event) {
+     console.log("********** onLoad", JSON.stringify(event, null, '\t'));
      handleLoadingScreenInfo(event.data.media.customData);
+     window.sessionId = event.data.sessionId;
      // For first time setup, load the Ooyala player
      // Otherwise, simply set the embed code
      if (!hasBeenInitialized) {
+       loadData = event.data;
        screenController.showScreen(splashScreen);
        initPlayer(event.data.media.customData);
      } else {
        reinitPlayer(event.data.media.customData);
      }
-
      window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
      $("#tmp_video").remove();
    }
@@ -181,7 +255,7 @@
       window.castReceiverManager.onSenderConnected = function(event) {
         senders = window.castReceiverManager.getSenders();
         if (debug) {
-          console.log("***** connected senders:", JSON.stringify(senders));
+          console.log("********** connected senders:", JSON.stringify(senders));
         }
       }
 
@@ -230,6 +304,16 @@
         switch (message.action) {
           case "setCCLanguage":
             setClosedCaptionsLanguage(message.data);
+            break;
+          case "getstatus":
+            // if status is requested, return the state, playhead, and embedcode
+            var status = {
+              state: player.getState(),
+              playhead: currentPlayheadTimeInfo,
+              embed: currentEmbedCode
+            }
+            // only send the status back to the sender that requested it
+            window.castMB.send(evt.senderId, JSON.stringify(status));
             break;
         }
       }
@@ -289,13 +373,12 @@
               case OO.EVENTS.PLAYED:
                 // If finished playing, display the splash screen
                 screenController.showScreen(splashScreen);
-                break;
+                    break;
               case OO.EVENTS.SET_EMBED_CODE:
                 if ($("#cc_track")) {
                   // remove track element for closed captions, if any - a new one will be created if needed
                   $("#cc_track").remove();
                 }
-                // If another video is requested, display the loading screen
                 screenController.showScreen(loadingScreen);
                 // Re-initialize the elements to be in their initial position
                 if (controls) {
@@ -329,10 +412,11 @@
               case OO.EVENTS.PLAYER_CREATED:
                 // Assign the root element and controls when player is created
                 rootElement = document.querySelector(".innerWrapper");
-                mediaElement = document.getElementsByClassName('video');
-                console.log("************** new mediaElement", mediaElement[0]);
-                window.mediaManager.setMediaElement(mediaElement[0]);
-
+                mediaElement = document.getElementsByClassName('video')[0];
+                mediaElement.autoplay = autoPlay;
+                console.log("********** new mediaElement", mediaElement);
+                window.mediaManager.setMediaElement(mediaElement);
+                        
                 controls = new _Controls(rootElement);
                 // Handling timeouts
                 handleReceiverTimeouts(player);
@@ -356,11 +440,18 @@
                 controls.setDisplaySpinner("none");
                 break;
               case OO.EVENTS.AUTHORIZATION_FETCHED:
-                if (arguments[1].streams[0].is_live_stream) {
-                  console.log("***** Live stream:", JSON.stringify(arguments[1].streams[0].delivery_type));
-                  isLiveStream = true;
+                var stream = arguments[1].streams[0];
+                if (stream) {
+                  if (stream.is_live_stream) {
+                    console.log("********** Live stream:", JSON.stringify(arguments[1].streams[0].delivery_type));
+                    isLiveStream = true;
+                  } else {
+                    console.log("********** Stream type:", JSON.stringify(arguments[1].streams[0].delivery_type));
+                  }
+                  currentURL = window.base64.decode(stream.url.data);
+                  console.log("********** Stream URL:", currentURL);
                 } else {
-                  console.log("***** Stream type:", JSON.stringify(arguments[1].streams[0].delivery_type));
+                    console.log("********** No stream info!");
                 }
                 break;
               case OO.EVENTS.CONTENT_TREE_FETCHED:
@@ -378,7 +469,7 @@
                   for (var i in languages) {
                     // Populate resource map of closed captions, it has format:
                     // "language" => URL
-                    console.log("CC:", languages[i], ccData.captions[languages[i]].url);
+                    console.log("********** CC:", languages[i], ccData.captions[languages[i]].url);
                     ccResourceMap[languages[i]] = ccData.captions[languages[i]].url;
                   }
                 }
@@ -397,7 +488,7 @@
                 break;
             }
             if (debug && evt && evt !== "playheadTimeChanged") {
-              //console.log("receiver.html", evt, JSON.stringify(arguments, null, '\t'));
+              console.log("receiver.html", evt, JSON.stringify(arguments, null, '\t'));
             }
             // send the arguments to all of the senders so that they can update
             sendToAllSenders(JSON.stringify(arguments));
