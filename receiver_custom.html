@@ -1,7 +1,7 @@
 <html>
 <head>
   <title>Chromecast Customized Receiver</title>
-  <script src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
+  <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 
   <link rel="shortcut icon" href="./images/favicon.ico" />
@@ -36,8 +36,9 @@
     </div>
   </div>
 
-  <div id='player'></div>
-
+  <div id='player'>
+      <video id="tmp_video"></video>
+  </div>
   <div id="error_screen">
     <div id="error_container" class="absolute_center">
       <h1 id= "error_title" class ="cast_text" style="text-transform:uppercase"></h1>
@@ -46,26 +47,25 @@
   </div>
   <script>
     // constants
-    var OOYALA_PLAYER_URL = "//player.ooyala.com/v3/283b128fe1c24bc2ad3fc76a07cef963?version=4f18e79abadaf7829a23bee44ea08cb8e3948636";
-
+    var OOYALA_PLAYER_URL = "//player.ooyala.com/v3/283b128fe1c24bc2ad3fc76a07cef963";
     var SPLASH_SCREEN_SRC = "./images/ooyala-logo.png";
     var LOGO_IMAGE_SRC = "./images/ooyala-logo.png";
     var PAUSE_ICON_SRC = " ./images/pause.png";
     var WATERMARK_ICON_SRC = "./images/ooyala-logo-watermark.png";
-
+    var DEBUG_TAG = "Chromecast-debug";
+   
     // set the timeouts to be 5 minutes
     var SPLASH_SCREEN_TIMEOUT_MILLIS = 5 * 60 *  1000;
     var LOADING_SCREEN_TIMEOUT_MILLIS = 5 * 60 *  1000;
     var PAUSE_STATE_TIMEOUT_MILLIS = 5 * 60 * 1000;
 
     window.castReceiverManager = null;
-    window.mediaMB = null;
     window.castMB = null;
-    var debug = false;
-
-    var mediaNamespace = "urn:x-cast:com.google.cast.media";
-    var namespace = "urn:x-cast:ooyala";
-
+    window.mediaManager = null;
+    window.mediaElement = null;
+    window.namespace = "urn:x-cast:ooyala";
+   
+    var debug = true;
     var initialTimeout = null;
     var player = null;
     var senders = [];
@@ -103,6 +103,7 @@
     // Initialize Chromecast receiver application
     window.onload = function() {
       cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.DEBUG);
+      setupMediaManager();
       setupCastReceiver();
       setupMessageBus();
       window.castReceiverManager.start();
@@ -114,7 +115,153 @@
       }, SPLASH_SCREEN_TIMEOUT_MILLIS);
     }
 
-    /**
+   /**
+    Required initialization of cast.receiver.MediaManager
+    https://developers.google.com/cast/docs/reference/receiver/cast.receiver.MediaManager
+    **/
+   function setupMediaManager() {
+     window.mediaElement = document.getElementById('tmp_video');
+     window.mediaManager = new cast.receiver.MediaManager(window.mediaElement);
+
+     window.mediaManager.onGetStatus = onGetStatus.bind(this);
+     window.mediaManager.onLoad = onLoad.bind(this);
+     window.mediaManager.onPauseOrig = window.mediaManager.onPause;
+     window.mediaManager.onPause = onPause.bind(this);
+     window.mediaManager.onPlayOrig = window.mediaManager.onPlay;
+     window.mediaManager.onPlay = onPlay.bind(this);
+     window.mediaManager.onSeekOrig = window.mediaManager.onSeek;
+     window.mediaManager.onSeek = onSeek.bind(this);
+     window.mediaManager.onSetVolumeOrig = window.mediaManager.onSetVolume;
+     window.mediaManager.onSetVolume = onSetVolume.bind(this);
+     window.mediaManager.onEndedOrig = window.mediaManager.onEnded;
+     window.mediaManager.onEnded = onEnded.bind(this);
+     window.mediaManager.onErrorOrig = window.mediaManager.onError;
+     window.mediaManager.onError = onError.bind(this);
+     window.mediaManager.customizedStatusCallback = customizedStatusCallback.bind(this);
+   }
+
+   /**
+    For debugging purposes only, debug output of current cast.receiver.media.MediaStatus object
+    **/
+   function customizedStatusCallback(ms) {
+     printDebugMessage("customizedStatusCallback", ms);
+     return ms;
+   }
+   
+   /**
+    Response to getStatus request of sender'media object
+    **/
+   function onGetStatus(event) {
+     printDebugMessage("onGetStatus", event);
+     window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
+   }
+
+   /**
+    Response to pause request of sender'media object
+    **/
+   function onPause(event) {
+     printDebugMessage("onPause", event);
+     window.mediaManager.onPauseOrig(event);
+     player.mb.publish(OO.EVENTS.PAUSE);
+     window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
+   }
+
+   /**
+    Response to play request of sender'media object
+    **/
+   function onPlay(event) {
+     printDebugMessage("onPlay", event);
+     window.mediaManager.onPlayOrig(event);
+     player.mb.publish(OO.EVENTS.INITIAL_PLAY);
+     window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
+   }
+
+   /**
+    Response to seek request of sender'media object
+    **/
+   function onSeek(event) {
+     printDebugMessage("onSeek", event);
+     var seekTime = parseInt(event.data.currentTime);
+     if (seekTime >= duration - 1) {
+       seekTime = (duration > 1) ? duration - 1 : 0;
+     }
+     player.mb.publish(OO.EVENTS.SEEK, seekTime);
+     window.mediaManager.onSeekOrig(event);
+     window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
+   }
+
+   /**
+    Response to setVolume request of sender'media object
+    **/
+   function onSetVolume(event) {
+     printDebugMessage("onSetVolume", event);
+     window.mediaManager.onSetVolumeOrig(event);
+     var volume = event.data.volume.level;
+     player.mb.publish(OO.EVENTS.CHANGE_VOLUME, volume);
+     window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
+   }
+
+   /**
+    Playback has finished, sender will be notified
+    **/
+   function onEnded() {
+     printDebugMessage("onEnded", null);
+     window.mediaManager.onEndedOrig(event);
+   }
+
+   /**
+    Error notification callback
+    **/
+   function onError(error) {
+     printDebugMessage("onError", error);
+     displayErrorTitleDescription(error);
+   }
+
+   /**
+    Response to loadMedia request from sender's cast session
+    **/
+   function onLoad(event) {
+     printDebugMessage("onLoad", event);
+     var playerData = event.data.media.customData;
+     handleLoadingScreenInfo(playerData);
+     // For first time setup, load the Ooyala player
+     // Otherwise, simply set the embed code
+     if (!hasBeenInitialized) {
+       screenController.showScreen(splashScreen);
+       initPlayer(playerData);
+     } else {
+       reinitPlayer(playerData);
+     }
+     window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
+     $("#tmp_video").remove();
+   }
+
+   /**
+    Allows to control dynamically debug console output about sender commands and ooyala player events
+    **/
+   function printDebugMessage(command, event, ignorePattern) {
+     if (event) {
+       if (event.data && event.data.customData) {
+         if (typeof event.data.customData.debug === "boolean") {
+           var newDebug = event.data.customData.debug;
+           if (debug !== newDebug) {
+             if (debug) {
+               console.log(DEBUG_TAG, "disabling debug");
+             } else {
+               console.log(DEBUG_TAG, command, JSON.stringify(event, null, '\t'));
+             }
+             debug = newDebug;
+           }
+         }
+       } else if (debug && (!ignorePattern || command.indexOf(ignorePattern) < 0)) {
+         console.log(DEBUG_TAG, command, JSON.stringify(event, null, '\t'));
+       }
+     } else if (debug) {
+       console.log(DEBUG_TAG, command);
+     }
+   }
+
+   /**
     Get the instance of the cast receiver
     if one needs to debug CastReceiverManager, one can override methods
     (onReady, onSenderConnected, etc.) here.
@@ -126,9 +273,7 @@
 
       window.castReceiverManager.onSenderConnected = function(event) {
         senders = window.castReceiverManager.getSenders();
-        if (debug) {
-          console.log("***** connected senders:", JSON.stringify(senders));
-        }
+        printDebugMessage("connected senders", senders);
       }
 
       window.castReceiverManager.onSenderDisconnected = function(event) {
@@ -153,86 +298,9 @@
     visit: https://developers.google.com/cast/docs/reference/receiver/cast.receiver.CastMessageBus
     **/
     function setupMessageBus() {
-      // create message bus for google media commands
-      window.mediaMB = castReceiverManager.getCastMessageBus(mediaNamespace);
       // create message bus for communications between receiver and sender
-      window.castMB = castReceiverManager.getCastMessageBus(namespace)
-      // onMessage gets called every time the sender sends a message
-      // It receives messages through google's message bus and will then
-      // publish events to ooyala core player message bus
-      window.mediaMB.onMessage = function(evt) {
-        // Adds error handling to the received messages
-        var ERROR_MESSAGE = "Exception in message format";
-
-        // verify message 
-        var message = null;
-
-        if (evt && evt.data) {
-          message = JSON.parse(evt.data);
-          if (!message.type) {
-            console.error(ERROR_MESSAGE);
-            return;
-          }
-        }
-
-        if (debug) {
-          console.log("******** received message", JSON.stringify(message, null, '\t'));
-        }
-
-        switch (message.type) {
-            case "LOAD":
-            if (!message.media || !message.media.customData) {
-              console.error(ERROR_MESSAGE);
-            }
-            // This method will handle the loading screen elements passed by the
-            // sender to be displayed on the loading screen
-            handleLoadingScreenInfo(message.media.customData);
-            // For first time setup, load the Ooyala player
-            // Otherwise, simply set the embed code
-            if (!hasBeenInitialized) {
-              screenController.showScreen(splashScreen);
-              initPlayer(message.media.customData);
-            } else {
-              reinitPlayer(message.media.customData);
-            }
-            break;
-          case "PAUSE":
-            player.mb.publish(OO.EVENTS.PAUSE);
-            break;
-          case "PLAY":
-            player.mb.publish(OO.EVENTS.PLAY);
-            break;
-          case "SEEK":
-            if (player) {
-              var seekTime = parseInt(message.currentTime);
-              if (seekTime >= duration - 1) {
-                seekTime = (duration > 1) ? duration - 1 : 0;
-              }
-              player.mb.publish(OO.EVENTS.SEEK, seekTime);
-            }
-            break;
-          case "SET_VOLUME":
-            if (player) {
-              player.mb.publish(OO.EVENTS.CHANGE_VOLUME, parseFloat(message.volume));
-            }
-            break;
-          case "GET_STATUS":
-            if (player) {
-              var status = {
-                state: player.getState(),
-                playhead: currentPlayheadTimeInfo,
-                embed: currentEmbedCode
-              }
-              // only send the status back to the sender that requested it
-              window.castMB.send(evt.senderId, JSON.stringify(status));
-            }
-            break;
-          case "STOP" :
-            window.castReceiverManager.stop();
-            break;
-        }
-      }
-
+      window.castMB = castReceiverManager.getCastMessageBus(window.namespace)
+        
       // onMessage gets called every time the sender sends a message
       // It receives messages through ooyala's message bus 
       window.castMB.onMessage = function(evt) {
@@ -254,6 +322,16 @@
           case "setCCLanguage":
             setClosedCaptionsLanguage(message.data);
             break;
+          case "getstatus":
+            // if status is requested, return the state, playhead, and embedcode
+            var status = {
+              state: player.getState(),
+              playhead: currentPlayheadTimeInfo,
+              embed: currentEmbedCode
+            }
+            // only send the status back to the sender that requested it
+            window.castMB.send(evt.senderId, JSON.stringify(status));
+            break;
         }
       }
     }
@@ -262,7 +340,7 @@
     This initPlayer will be called when the sender sends the init call
     It will load Ooyala player and subscribe to all events that the player publishes
     **/
-   function initPlayer(data) {
+    function initPlayer(data) {
       // Clear the initial timeout set to timeout on the splash screen
       if (data && data.ec) {
         clearTimeout(initialTimeout);
@@ -270,12 +348,23 @@
       // mark as initialized
       hasBeenInitialized = true;
       currentEmbedCode = data.ec;
-	
+
+      // Change the V3 version here
+      var v3Version = (data && data.version) ? "version=" + data.version : "version=28c0adb1084aef6d3de89265cf07a71a555ffa39";
+
+      if (typeof data.debug === "boolean") {
+        debug = data.debug;
+      } else {
+        debug = false;
+      }
+
+      // Change the PlayerBrandingID here
+      var pbid = (data && data.pbid) ? data.pbid : "283b128fe1c24bc2ad3fc76a07cef963";
+
       // prepare the player load script
-      debug = data.debug;
       var playerJs = document.createElement("script");
       playerJs.type = "text/javascript";
-      playerJs.src = OOYALA_PLAYER_URL + (debug? "&debug=true" : "");
+      playerJs.src = OOYALA_PLAYER_URL + "?" + (debug? ("debug=true&" + v3Version) : v3Version);
       var playerParams = {};
       if (data.params) {
         if (typeof data.params === "string") {
@@ -284,7 +373,7 @@
           playerParams = data.params;
         }
       }
-      if (typeof playerParams['autoplay'] !== 'boolean') {
+      if (typeof playerParams['autoplay'] !== "boolean") {
         playerParams['autoplay'] = true;
       }
       autoPlay = playerParams['autoplay'];
@@ -294,6 +383,7 @@
         // we should set up ccLanguage variable so that playback starts with closed captioning
         ccLanguage = playerParams['ccLanguage'];
       }
+
       if (!playerParams.onCreate) {
         playerParams.onCreate = function(player) {
           player.mb.subscribe("*", "chromecast", function(evt) {
@@ -313,7 +403,6 @@
                   // remove track element for closed captions, if any - a new one will be created if needed
                   $("#cc_track").remove();
                 }
-                // If another video is requested, display the loading screen
                 screenController.showScreen(loadingScreen);
                 // Re-initialize the elements to be in their initial position
                 if (controls) {
@@ -347,6 +436,10 @@
               case OO.EVENTS.PLAYER_CREATED:
                 // Assign the root element and controls when player is created
                 rootElement = document.querySelector(".innerWrapper");
+                window.mediaElement = document.getElementsByClassName('video')[0];
+                printDebugMessage("new mediaElement", window.mediaElement);
+                window.mediaManager.setMediaElement(window.mediaElement);
+                
                 controls = new _Controls(rootElement);
                 // Handling timeouts
                 handleReceiverTimeouts(player);
@@ -370,9 +463,17 @@
                 controls.setDisplaySpinner("none");
                 break;
               case OO.EVENTS.AUTHORIZATION_FETCHED:
-                if (arguments[1].streams[0].is_live_stream) {
-                  isLiveStream = true;
-                } 
+                var stream = arguments[1].streams[0];
+                if (stream) {
+                  if (stream.is_live_stream) {
+                    printDebugMessage("Live stream:", arguments[1].streams[0].delivery_type);
+                    isLiveStream = true;
+                  } else {
+                    printDebugMessage("Stream type:", arguments[1].streams[0].delivery_type);
+                  }
+                } else {
+                  printDebugMessage("No stream info", null);
+                }
                 break;
               case OO.EVENTS.CONTENT_TREE_FETCHED:
                 // We should clear closed captions resource map as it may be populated from
@@ -389,7 +490,7 @@
                   for (var i in languages) {
                     // Populate resource map of closed captions, it has format:
                     // "language" => URL
-                    console.log("CC:", languages[i], ccData.captions[languages[i]].url);
+                    printDebugMessage("CC:", languages[i] + ccData.captions[languages[i]].url);
                     ccResourceMap[languages[i]] = ccData.captions[languages[i]].url;
                   }
                 }
@@ -406,9 +507,11 @@
 
                 displayErrorTitleDescription(error);
                 break;
-            }
-            // send the arguments to all of the senders so that they can update
-            sendToAllSenders(JSON.stringify(arguments));
+              }
+
+              printDebugMessage("receiver.html " + evt, arguments, "playheadTimeChanged");
+              // send the arguments to all of the senders so that they can update
+              sendToAllSenders(JSON.stringify(arguments));
           });
         }
       }
@@ -416,6 +519,7 @@
       // when the script has loaded, create the player
       playerJs.onload = (function(data) {
         player = OO.Player.create('player', data.ec, playerParams);
+        player.mb.subscribe("*", "chromecast", playerEventListener.bind(this));
       }).bind(this, data);
       document.head.appendChild(playerJs);
     }
@@ -425,6 +529,8 @@
     **/
     function reinitPlayer(data) {
       if (data && data.ec) {
+        debug = data.debug;
+
         currentEmbedCode = data.ec;
         isLiveStream = false;
         duration = 0;
@@ -949,6 +1055,19 @@
     function displayErrorTitleDescription(error) {
       var defaultErrorTitle = "There Is an Error";
       var defaultErrorDescription = "Please Restart Your Application";
+
+      if (error.code) {
+        // in case error came from cast.media API calls, forward it to senders
+        if (error.description) {
+          sendToAllSenders(JSON.stringify({error: { code: error.code, description: error.description}}));
+        } else {
+          sendToAllSenders(JSON.stringify({error: { code: error}}));
+        }
+
+        document.querySelector("#error_title").innerHTML = errorTitle;
+        document.querySelector("#error_description").innerHTML = defaultErrorDescription;
+        return;
+      }
 
       // Create mapping of Ooyala errors to error messages
       var errorMap = {};
