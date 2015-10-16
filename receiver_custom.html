@@ -114,6 +114,9 @@
       }, SPLASH_SCREEN_TIMEOUT_MILLIS);
     }
 
+   /**
+    Required initialization of cast.receiver.MediaManager
+    **/
    function setupMediaManager() {
      window.mediaElement = document.getElementById('tmp_video');
      window.mediaManager = new cast.receiver.MediaManager(window.mediaElement);
@@ -136,6 +139,9 @@
      window.mediaManager.customizedStatusCallback = customizedStatusCallback.bind(this);
    }
 
+   /**
+    For debugging purposes only, debug output of current cast.receiver.media.MediaStatus object
+    **/
    function customizedStatusCallback(ms) {
      if (debug) {
        console.log("********** customizedStatusCallback", JSON.stringify(ms, null, '\t'));
@@ -143,11 +149,17 @@
      return ms;
    }
    
+   /**
+    Response to getStatus request of sender'media object
+    **/
    function onGetStatus(event) {
      setupDebug("onGetStatus", event);
      window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
    }
 
+   /**
+    Response to pause request of sender'media object
+    **/
    function onPause(event) {
      setupDebug("onPause", event);
      window.mediaManager.onPauseOrig(event);
@@ -155,6 +167,9 @@
      window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
    }
 
+   /**
+    Response to play request of sender'media object
+    **/
    function onPlay(event) {
      setupDebug("onPlay", event);
      window.mediaManager.onPlayOrig(event);
@@ -162,6 +177,9 @@
      window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
    }
 
+   /**
+    Response to seek request of sender'media object
+    **/
    function onSeek(event) {
      setupDebug("onSeek", event);
      var seekTime = parseInt(event.data.currentTime);
@@ -173,6 +191,9 @@
      window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
    }
 
+   /**
+    Response to setVolume request of sender'media object
+    **/
    function onSetVolume(event) {
      setupDebug("onSetVolume", event);
      window.mediaManager.onSetVolumeOrig(event);
@@ -181,22 +202,34 @@
      window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
    }
 
+   /**
+    Playback has finished, sender will be notified
+    **/
    function onEnded() {
      setupDebug("onEnded", null);
      window.mediaManager.onEndedOrig(event);
    }
 
+   /**
+    Error notification callback
+    **/
    function onError(event) {
      console.log("********** onError", JSON.stringify(event, null, '\t'));
    }
 
+   /**
+    Placeholder, not used yet
+    **/
    function onPreload(event) {
-     // XXX not used so far
+     // not used so far
      setupDebug("onPreload", event);
      window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
      return true;
    }
 
+   /**
+    Response to loadMedia request from sender's cast session
+    **/
    function onLoad(event) {
      setupDebug("onLoad", event);
      var playerData = event.data.media.customData;
@@ -213,19 +246,26 @@
      $("#tmp_video").remove();
    }
 
+   /**
+    Allows to control dynamically debug console output about sender commands and ooyala player events
+    **/
    function setupDebug(command, event) {
-     if (!!event.data.customData) {
-       if (typeof event.data.customData.debug === "boolean") {
-         var newDebug = event.data.customData.debug;
-         if (debug !== newDebug) {
-           if (debug) {
-             console.log("********** disabling debug");
-           } else {
-             console.log("**********", command, JSON.stringify(event, null, '\t'));
+     if (event) {
+       if (event.data && event.data.customData) {
+         if (typeof event.data.customData.debug === "boolean") {
+           var newDebug = event.data.customData.debug;
+           if (debug !== newDebug) {
+             if (debug) {
+               console.log("********** disabling debug");
+             } else {
+               console.log("**********", command, JSON.stringify(event, null, '\t'));
+             }
+             debug = newDebug;
            }
-           debug = newDebug;
          }
        }
+     } else if (debug) {
+       console.log("**********", command);
      }
    }
 
@@ -417,7 +457,7 @@
                 // Just show seek bar, duration and played labels
                 controls.showScrubber();
                 controls.setValuePlayhead(currentPlayheadTimeInfo);
-                
+
                 // Fade out the scrubber when seeking in Playing State
                 if (player.getState() === OO.STATE.PLAYING) {
                     controls.handleScrubberTransition();
@@ -452,7 +492,7 @@
                 // We should clear closed captions resource map as it may be populated from
                 // from playback of previous title
                 if (!$.isEmptyObject(ccResourceMap)) {
-                    ccResourceMap = {}
+                  ccResourceMap = {}
                 }
                 // Closed captions availability for this asset is known when content tree is fetched.
                 // Content tree data is available in arguments[1], closed captions information
@@ -475,9 +515,9 @@
                 // the index 1 of the arguments array is an object containing the OO.ERROR code
                 var error = "";
                 if (arguments[1] && arguments[1].code) {
-                    error = arguments[1].code;
+                  error = arguments[1].code;
                 }
-                
+
                 displayErrorTitleDescription(error);
                 break;
               }
