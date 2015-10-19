@@ -519,7 +519,6 @@
       // when the script has loaded, create the player
       playerJs.onload = (function(data) {
         player = OO.Player.create('player', data.ec, playerParams);
-        player.mb.subscribe("*", "chromecast", playerEventListener.bind(this));
       }).bind(this, data);
       document.head.appendChild(playerJs);
     }
