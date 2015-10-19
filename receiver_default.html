@@ -2,6 +2,7 @@
 <head>
   <title>Chromecast Sample Default Receiver</title>
   <script src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 </head>
 
 <body style='overflow: hidden'>
@@ -17,10 +18,14 @@
     var LOGO_IMAGE_SRC = "./images/ooyala-logo.png";
     var PAUSE_ICON_SRC = " ./images/pause.png";
     var WATERMARK_ICON_SRC = "./images/ooyala-logo-watermark.png";
+    var V3_URL = "//player.ooyala.com/v3/51a0285082d44e37b5d3fbf2b4a9812b?debug=true&version=28c0adb1084aef6d3de89265cf07a71a555ffa39";
+    var DEBUG_TAG = "Chromecast-debug";
    
-    window.onload = function() {
-      var V3_URL = "//player.ooyala.com/v3/51a0285082d44e37b5d3fbf2b4a9812b?debug=true&version=28c0adb1084aef6d3de89265cf07a71a555ffa39";
+    window.mediaManager = null;
+    window.mediaElement = null;
+    window.namespace = "urn:x-cast:ooyala";
 
+    window.onload = function() {
       var splashImage = document.querySelector("#splash_image");
       splashImage.src = SPLASH_SCREEN_SRC;
         
@@ -28,58 +33,43 @@
       playerJs.type = "text/javascript";
       playerJs.src = V3_URL;
 
-      playerJs.onload = (function() {
-        window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
-        window.castMB = window.castReceiverManager.getCastMessageBus("urn:x-cast:com.google.cast.media");
-        // onMessage gets called every time the sender sends a message
-        // It receives messages through google's message bus and will then
-        // publish events to ooyala core player message bus
-        window.castMB.onMessage = function(evt) {
-          // Adds error handling to the received messages
-          var message = null;
-          var ERROR_MESSAGE = "Exception in message format";
+      window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
+      window.mediaElement = document.getElementById('tmp_video');
+      window.mediaManager = new cast.receiver.MediaManager(mediaElement);
+      window.mediaManager.onLoad = onLoad.bind(this);
 
-          if (evt && evt.data) {
-            message = JSON.parse(evt.data);
-            if (!message.type) {
-              console.error(ERROR_MESSAGE);
-              return;
-            }
-            if (message.type == "GET_STATUS") {
-              // very first incoming message upon creation of message bus is GET_STATUS,
-              // it should be ignored, all subsequent GET_STATUS messages will be going
-              // though CastReceiverModule's message bus
-              return;
-            }
-            if (!message.media || !message.media.customData) {
-              // message to load media is the second incoming message after GET_STATUS (see above)
-              // this will be the only one mesasage going through this channel, all subsequest messages
-              // will be going through player's CastReceiverModule
-              console.error(ERROR_MESSAGE);
-              return;
-            }
-          }
+      window.castMB = castReceiverManager.getCastMessageBus(window.namespace)
+      window.castReceiverManager.start();
 
-          var data = message.media.customData;
-          var playerParams = {};
-          if (data.params) {
-            if (typeof data.params === "string") {
-              playerParams = eval("(" + data.params + ")");
-            } else if (typeof data.params === "object") {
-              playerParams = data.params;
-            }
-          }
-          if (typeof playerParams['autoplay'] !== 'boolean') {
-            playerParams['autoplay'] = true;
-          }
-          playerParams['splashScreen'] = SPLASH_SCREEN_SRC;
-          playerParams['logoImage'] = LOGO_IMAGE_SRC;
-          playerParams['pauseIcon'] = PAUSE_ICON_SRC;
-          playerParams['watermarkIcon'] = WATERMARK_ICON_SRC;
-          var player = OO.Player.create('player', data.ec, playerParams);
-          player.mb.publish(OO.EVENTS.CHROMECAST_INIT, data);
+      function onLoad(event) {
+        var data = event.data.media.customData;
+        if (data.debug) {
+          console.log(DEBUG_TAG, "onLoad", JSON.stringify(event, null, '\t'));
         }
-      });
+
+        var playerParams = {};
+        if (data.params) {
+          if (typeof data.params === "string") {
+            playerParams = eval("(" + data.params + ")");
+          } else if (typeof data.params === "object") {
+            playerParams = data.params;
+          }
+        }
+        if (typeof playerParams['autoplay'] !== 'boolean') {
+          playerParams['autoplay'] = true;
+        }
+        playerParams['splashScreen'] = SPLASH_SCREEN_SRC;
+        playerParams['logoImage'] = LOGO_IMAGE_SRC;
+        playerParams['pauseIcon'] = PAUSE_ICON_SRC;
+        playerParams['watermarkIcon'] = WATERMARK_ICON_SRC;
+        playerParams['mediaManager'] = window.mediaManager;
+
+        var player = OO.Player.create('player', data.ec, playerParams);
+        player.mb.publish(OO.EVENTS.CHROMECAST_INIT, data);
+
+        window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
+        $("#tmp_video").remove();
+      }
       document.head.appendChild(playerJs);
     }
   </script>
