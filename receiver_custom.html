@@ -52,7 +52,8 @@
     var LOGO_IMAGE_SRC = "./images/ooyala-logo.png";
     var PAUSE_ICON_SRC = " ./images/pause.png";
     var WATERMARK_ICON_SRC = "./images/ooyala-logo-watermark.png";
-    var DEBUG_TAG = "Chromecast-debug";
+    var CHROMECAST_DEBUG_TAG = "Chromecast-debug";
+    var OOYALA_DEBUG_TAG = "Ooyala-debug";
    
     // set the timeouts to be 5 minutes
     var SPLASH_SCREEN_TIMEOUT_MILLIS = 5 * 60 *  1000;
@@ -144,6 +145,7 @@
     For debugging purposes only, debug output of current cast.receiver.media.MediaStatus object
     **/
    function customizedStatusCallback(ms) {
+     ms.data = { customData: { debug: debug } }  // to make sure it will be printed with Chromecast-debug tag
      printDebugMessage("customizedStatusCallback", ms);
      return ms;
    }
@@ -152,6 +154,7 @@
     Response to getStatus request of sender'media object
     **/
    function onGetStatus(event) {
+     event.data = { customData: { debug: debug } } // to make sure it will be printed with Chromecast-debug tag
      printDebugMessage("onGetStatus", event);
      window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
    }
@@ -246,18 +249,20 @@
            var newDebug = event.data.customData.debug;
            if (debug !== newDebug) {
              if (debug) {
-               console.log(DEBUG_TAG, "disabling debug");
+               console.log(CHROMECAST_DEBUG_TAG, "disabling debug");
              } else {
-               console.log(DEBUG_TAG, command, JSON.stringify(event, null, '\t'));
+               console.log(CHROMECAST_DEBUG_TAG, command, JSON.stringify(event, null, '\t'));
              }
              debug = newDebug;
+           } else if (debug) {
+             console.log(CHROMECAST_DEBUG_TAG, command, JSON.stringify(event, null, '\t'));
            }
          }
        } else if (debug && (!ignorePattern || command.indexOf(ignorePattern) < 0)) {
-         console.log(DEBUG_TAG, command, JSON.stringify(event, null, '\t'));
+         console.log(OOYALA_DEBUG_TAG, command, JSON.stringify(event, null, '\t'));
        }
      } else if (debug) {
-       console.log(DEBUG_TAG, command);
+       console.log(CHROMECAST_DEBUG_TAG, command);
      }
    }
 
@@ -490,7 +495,7 @@
                   for (var i in languages) {
                     // Populate resource map of closed captions, it has format:
                     // "language" => URL
-                    printDebugMessage("CC:", languages[i] + ccData.captions[languages[i]].url);
+                    printDebugMessage("CC:", languages[i] + " " + ccData.captions[languages[i]].url);
                     ccResourceMap[languages[i]] = ccData.captions[languages[i]].url;
                   }
                 }
