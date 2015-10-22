@@ -53,7 +53,7 @@
     var PAUSE_ICON_SRC = " ./images/pause.png";
     var WATERMARK_ICON_SRC = "./images/ooyala-logo-watermark.png";
     var CHROMECAST_DEBUG_TAG = "Chromecast-debug";
-    var OOYALA_DEBUG_TAG = "Ooyala-debug";
+    var PLAYER_DEBUG_TAG = "Player-debug";
    
     // set the timeouts to be 5 minutes
     var SPLASH_SCREEN_TIMEOUT_MILLIS = 5 * 60 *  1000;
@@ -259,7 +259,7 @@
            }
          }
        } else if (debug && (!ignorePattern || command.indexOf(ignorePattern) < 0)) {
-         console.log(OOYALA_DEBUG_TAG, command, JSON.stringify(event, null, '\t'));
+         console.log(PLAYER_DEBUG_TAG, command, JSON.stringify(event, null, '\t'));
        }
      } else if (debug) {
        console.log(CHROMECAST_DEBUG_TAG, command);
