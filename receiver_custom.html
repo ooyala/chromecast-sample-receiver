@@ -136,6 +136,8 @@
      window.mediaManager.onSetVolume = onSetVolume.bind(this);
      window.mediaManager.onEndedOrig = window.mediaManager.onEnded;
      window.mediaManager.onEnded = onEnded.bind(this);
+     window.mediaManager.onStopOrig = window.mediaManager.onStop;
+     window.mediaManager.onStop = onStop.bind(this);
      window.mediaManager.onErrorOrig = window.mediaManager.onError;
      window.mediaManager.onError = onError.bind(this);
      window.mediaManager.customizedStatusCallback = customizedStatusCallback.bind(this);
@@ -202,6 +204,15 @@
      var volume = event.data.volume.level;
      player.mb.publish(OO.EVENTS.CHANGE_VOLUME, volume);
      window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
+   }
+
+   /**
+    Session will be stopped, show splash screen
+    **/
+   function onStop(event) {
+     screenController.showScreen(splashScreen);
+     window.mediaManager.onStopOrig(event);
+     printDebugMessage("onStop", event);
    }
 
    /**
@@ -1039,7 +1050,7 @@
           // the player state, restart the timeout if in a paused state
           case OO.EVENTS.SEEK:
           case OO.EVENTS.CHANGE_VOLUME:
-            if (this.state === OO.STATE.PAUSED) {
+            if (player.getState() === OO.STATE.PAUSED) {
               this.restartTimeout();
             }
             break;
