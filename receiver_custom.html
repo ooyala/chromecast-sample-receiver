@@ -89,6 +89,7 @@
     var controls = null;
     var rootElement = null;
     var stopped = false;
+    var ended = false;
     var stopEvent = null;
 
     // Screen related variables
@@ -187,11 +188,12 @@
     Response to seek request of sender'media object
     **/
    function onSeek(event) {
-     printDebugMessage("onSeek", event);
      var seekTime = parseInt(event.data.currentTime);
      if (seekTime >= duration - 1) {
        seekTime = (duration > 1) ? duration - 1 : 0;
      }
+     event.data.currentTime = seekTime;
+     printDebugMessage("onSeek", event);
      player.mb.publish(OO.EVENTS.SEEK, seekTime);
      window.mediaManager.onSeekOrig(event);
      window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
@@ -222,6 +224,10 @@
     Playback has finished, sender will be notified
     **/
    function onEnded() {
+     if (ended) {
+       return;
+     }
+     ended = true;
      printDebugMessage("onEnded", null);
      window.mediaManager.onEndedOrig(event);
    }
@@ -240,6 +246,7 @@
    function onLoad(event) {
      printDebugMessage("onLoad", event);
      stopped = false;
+     ended = false;
      stopEvent = null;
      var playerData = event.data.media.customData;
      handleLoadingScreenInfo(playerData);
@@ -420,6 +427,8 @@
                 screenController.showScreen(splashScreen);
                 if (stopped) {
                   window.mediaManager.onStopOrig(stopEvent);
+                } else if (!ended) {
+                  window.mediaManager.onEnded(stopEvent);
                 }
                 break;
               case OO.EVENTS.SET_EMBED_CODE:
