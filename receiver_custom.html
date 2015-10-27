@@ -88,6 +88,8 @@
     var autoPlay = false;
     var controls = null;
     var rootElement = null;
+    var stopped = false;
+    var stopEvent = null;
 
     // Screen related variables
     var screenController = null;
@@ -210,8 +212,9 @@
     Session will be stopped, show splash screen
     **/
    function onStop(event) {
-     screenController.showScreen(splashScreen);
-     window.mediaManager.onStopOrig(event);
+     stopped = true;
+     stopEvent = event;
+     player.mb.publish(OO.EVENTS.PLAYED);
      printDebugMessage("onStop", event);
    }
 
@@ -236,6 +239,8 @@
     **/
    function onLoad(event) {
      printDebugMessage("onLoad", event);
+     stopped = false;
+     stopEvent = null;
      var playerData = event.data.media.customData;
      handleLoadingScreenInfo(playerData);
      // For first time setup, load the Ooyala player
@@ -366,7 +371,7 @@
       currentEmbedCode = data.ec;
 
       // Change the V3 version here
-      var v3Version = (data && data.version) ? "version=" + data.version : "version=198e0c97b9b584a28950e97506ef1200d03d0c64";
+      var v3Version = (data && data.version) ? "version=" + data.version : "version=4677a1fea0689eeb85dc7dce2538f027280d52dd";
 
       if (typeof data.debug === "boolean") {
         debug = data.debug;
@@ -413,6 +418,9 @@
               case OO.EVENTS.PLAYED:
                 // If finished playing, display the splash screen
                 screenController.showScreen(splashScreen);
+                if (stopped) {
+                  window.mediaManager.onStopOrig(stopEvent);
+                }
                 break;
               case OO.EVENTS.SET_EMBED_CODE:
                 if ($("#cc_track")) {
