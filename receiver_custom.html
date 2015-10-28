@@ -428,7 +428,7 @@
                 if (stopped) {
                   window.mediaManager.onStopOrig(stopEvent);
                 } else if (!ended) {
-                  window.mediaManager.onEnded(stopEvent);
+                  window.mediaManager.onEnded();
                 }
                 break;
               case OO.EVENTS.SET_EMBED_CODE:
