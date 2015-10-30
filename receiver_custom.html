@@ -378,7 +378,7 @@
       currentEmbedCode = data.ec;
 
       // Change the V3 version here
-      var v3Version = (data && data.version) ? "version=" + data.version : "version=cadb227659b28c2f14607687d9eeea5cefc74b45";
+      var v3Version = (data && data.version) ? "version=" + data.version : "version=a6af5f148620e3f7dd795d7e8dfc6294a2e1f8b5";
 
       if (typeof data.debug === "boolean") {
         debug = data.debug;
@@ -470,6 +470,7 @@
                 // Assign the root element and controls when player is created
                 rootElement = document.querySelector(".innerWrapper");
                 window.mediaElement = document.getElementsByClassName('video')[0];
+                window.mediaElement.autoplay = autoPlay;
                 printDebugMessage("new mediaElement", window.mediaElement);
                 window.mediaManager.setMediaElement(window.mediaElement);
                 
