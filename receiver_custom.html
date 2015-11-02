@@ -42,6 +42,7 @@
   <div id="error_screen">
     <div id="error_container" class="absolute_center">
       <h1 id= "error_title" class ="cast_text" style="text-transform:uppercase"></h1>
+      <h3 id= "error_code" class ="cast_text"></h3>
       <h3 id= "error_description" class ="cast_text"></h3>
     </div>
   </div>
@@ -235,9 +236,10 @@
    /**
     Error notification callback
     **/
-   function onError(error) {
-     printDebugMessage("onError", error);
-     displayErrorTitleDescription(error);
+   function onError(errorObj) {
+     printDebugMessage("onError", errorObj);
+     window.mediaManager.onErrorOrig(errorObj);
+     displayCastMediaError(errorObj);
    }
 
    /**
@@ -360,6 +362,9 @@
             // only send the status back to the sender that requested it
             window.castMB.send(evt.senderId, JSON.stringify(status));
             break;
+          case "error":
+            displayCastMediaError(message.message);
+            break;
         }
       }
     }
@@ -385,9 +390,6 @@
       } else {
         debug = false;
       }
-
-      // Change the PlayerBrandingID here
-      var pbid = (data && data.pbid) ? data.pbid : "283b128fe1c24bc2ad3fc76a07cef963";
 
       // prepare the player load script
       var playerJs = document.createElement("script");
@@ -1080,6 +1082,21 @@
     // ERROR MESSAGES
     /*************************************************************************/
 
+    function displayCastMediaError(error) {
+      screenController.showScreen(errorScreen);
+      document.querySelector("#error_title").innerHTML = "There Is an Error";
+      if (error.code) {
+        document.querySelector("#error_code").innerHTML = error.code;
+      }
+
+      if (error.description) {
+        document.querySelector("#error_description").innerHTML = error.description;
+      } else if (!error.code) {
+        // no code, no description - just show whatever is there ???
+        document.querySelector("#error_description").innerHTML = JSON.stringify(error);
+      }
+    }
+
     /**
     This function handles mapping the error messages from core player's message bus and displaying
     both the Title and Description to the User.
@@ -1088,19 +1105,6 @@
     function displayErrorTitleDescription(error) {
       var defaultErrorTitle = "There Is an Error";
       var defaultErrorDescription = "Please Restart Your Application";
-
-      if (error.code) {
-        // in case error came from cast.media API calls, forward it to senders
-        if (error.description) {
-          sendToAllSenders(JSON.stringify({error: { code: error.code, description: error.description}}));
-        } else {
-          sendToAllSenders(JSON.stringify({error: { code: error}}));
-        }
-
-        document.querySelector("#error_title").innerHTML = errorTitle;
-        document.querySelector("#error_description").innerHTML = defaultErrorDescription;
-        return;
-      }
 
       // Create mapping of Ooyala errors to error messages
       var errorMap = {};
