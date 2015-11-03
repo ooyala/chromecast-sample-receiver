@@ -1092,7 +1092,6 @@
       if (error.description) {
         document.querySelector("#error_description").innerHTML = error.description;
       } else if (!error.code) {
-        // no code, no description - just show whatever is there ???
         document.querySelector("#error_description").innerHTML = JSON.stringify(error);
       }
     }
