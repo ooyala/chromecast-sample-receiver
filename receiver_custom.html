@@ -239,6 +239,10 @@
    function onError(errorObj) {
      printDebugMessage("onError", errorObj);
      window.mediaManager.onErrorOrig(errorObj);
+     // Display on Chromecast screen this errorObj.
+     // If this object is chrome.cast.Error, then it will
+     // show error code and description, otherwise it wil
+     // print string representation of this object
      displayCastMediaError(errorObj);
    }
 
@@ -363,6 +367,10 @@
             window.castMB.send(evt.senderId, JSON.stringify(status));
             break;
           case "error":
+            // This message came from sender through ooyala namespace, its purpose is to render on 
+            // Chromecast display errors that may come from sender side. This message has structure:
+            // { action: 'error', message: chrome.cast.Error }
+            // Both chrome.cast.Error's code and description will be printed on the screen
             displayCastMediaError(message.message);
             break;
         }
