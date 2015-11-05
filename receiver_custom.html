@@ -391,7 +391,7 @@
       currentEmbedCode = data.ec;
 
       // Change the V3 version here
-      var v3Version = (data && data.version) ? "version=" + data.version : "version=53e3408d86b42b1ca46892e3ef30b2f3d7a2753a";
+      var v3Version = (data && data.version) ? "version=" + data.version : "version=07cf375fdee82c160ba4bb2080cceeeca9d11fbd";
 
       if (typeof data.debug === "boolean") {
         debug = data.debug;
@@ -425,14 +425,13 @@
       if (!playerParams.onCreate) {
         playerParams.onCreate = function(player) {
           player.mb.subscribe("*", "chromecast", function(evt) {
-            var toSend = false;
             switch (evt) {
               case OO.EVENTS.PLAYHEAD_TIME_CHANGED:
                 currentPlayheadTimeInfo = arguments;
                 duration = arguments[2];
                 // As the playhead moves, update the progress bar, playhead, and duration
                 controls.setValuePlayhead(currentPlayheadTimeInfo);
-                toSend = true;
+                sendToAllSenders(JSON.stringify(arguments));
                 break;
               case OO.EVENTS.PLAYED:
                 // If finished playing, display the splash screen
@@ -442,7 +441,7 @@
                 } else if (!ended) {
                   window.mediaManager.onEnded();
                 }
-                toSend = true;
+                sendToAllSenders(JSON.stringify(arguments));
                 break;
               case OO.EVENTS.SET_EMBED_CODE:
                 if ($("#cc_track")) {
@@ -478,7 +477,7 @@
                 // Show all the controls and make sure playhead has been updated
                 controls.showControls();
                 controls.setValuePlayhead(currentPlayheadTimeInfo);
-                toSend = true;
+                sendToAllSenders(JSON.stringify(arguments));
                 break;
               case OO.EVENTS.PLAYER_CREATED:
                 // Assign the root element and controls when player is created
@@ -501,7 +500,7 @@
                 if (player.getState() === OO.STATE.PLAYING) {
                   controls.handleScrubberTransition();
                 }
-                toSend = true;
+                sendToAllSenders(JSON.stringify(arguments));
                 break;
               case OO.EVENTS.BUFFERING:
                 // Show spinner
@@ -546,7 +545,7 @@
               case OO.EVENTS.CLOSED_CAPTIONS_INFO_AVAILABLE:
               case OO.EVENTS.PLAYING:
               case OO.EVENTS.SEEK:
-                toSend = true;
+                sendToAllSenders(JSON.stringify(arguments));
                 break;
               case OO.EVENTS.ERROR:
                 // Display the error screen with the proper errors
@@ -559,15 +558,11 @@
                 }
 
                 displayErrorTitleDescription(error);
-                toSend = true;
+                sendToAllSenders(JSON.stringify(arguments));
                 break;
               }
 
               printDebugMessage("receiver.html " + evt, arguments, "playheadTimeChanged");
-              if (toSend) {
-                // send the arguments to all of the senders so that they can update
-                sendToAllSenders(JSON.stringify(arguments));
-              }
           });
         }
       }
