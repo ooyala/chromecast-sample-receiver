@@ -52,6 +52,7 @@
     var SPLASH_SCREEN_SRC = "./images/ooyala-logo.png";
     var LOGO_IMAGE_SRC = "./images/ooyala-logo.png";
     var PAUSE_ICON_SRC = " ./images/pause.png";
+    var PLAY_ICON_SRC = " ./images/play.png";
     var WATERMARK_ICON_SRC = "./images/ooyala-logo-watermark.png";
     var CHROMECAST_DEBUG_TAG = "Chromecast-debug";
     var PLAYER_DEBUG_TAG = "Player-debug";
@@ -391,7 +392,7 @@
       currentEmbedCode = data.ec;
 
       // Change the V3 version here
-      var v3Version = (data && data.version) ? "version=" + data.version : "version=1050a3d975318bb0b3566e3e19044a08d6ae40cb";
+      var v3Version = (data && data.version) ? "version=" + data.version : "version=80f97361ee65910d2032671e7a657271b257f4a2";
 
       if (typeof data.debug === "boolean") {
         debug = data.debug;
@@ -470,12 +471,13 @@
                 screenController.showScreen(playerScreen, "setClosedCaptionsLanguage(ccLanguage)");
                 // Fade out the title, pause, labels, and the scrubber
                 // Passing in a specified delay for timing out the transition
-                controls.handleControlsTransition(controls.getDelayInMillis());
+                controls.handlePausePlayTransition(controls.getDelayInMillis());
                 controls.setDisplaySpinner("none");
                 break;
               case OO.EVENTS.PAUSED:
                 // Show all the controls and make sure playhead has been updated
                 controls.showControls();
+                controls.handleControlsTransition(controls.getDelayInMillis());
                 controls.setValuePlayhead(currentPlayheadTimeInfo);
                 sendToAllSenders(JSON.stringify(arguments));
                 break;
@@ -764,7 +766,7 @@
       // The duration and times for other transitions
       this.secondsToTransition = 1;
       this.secondsToScrubberTransition = 5;
-      this.millisToFade = 500;
+      this.millisToFade = 2000;
       /** END CONSTANTS FOR TRANSITIONS**/
 
       // Initialize the controls
@@ -787,8 +789,7 @@
       this.rootElement.appendChild(this.controls_wrap);
       // Append the initial html to the control wrapper
       document.querySelector(".oo_controls").innerHTML +=
-                               '<div id="pause_wrapper"  >\
-                                  <img id="pause_icon" class="absolute_center" />\
+                               '<div id="spinner_wrapper">\
                                   <div id="spinner_icon" class="absolute_center spinner"></div>\
                                 </div>\
                                 <div id="promo_title_container">\
@@ -800,7 +801,11 @@
                                 <div id="watermark_wrapper">\
                                   <img id ="watermark_icon" />\
                                 </div>\
-                                <div id= "scrubber_wrapper">\
+                                <div id="scrubber_wrapper">\
+                                  <div id ="play_pause_wrapper">\
+                                    <img id="pause_icon" />\
+                                    <img id="play_icon" />\
+                                  </div>\
                                   <div id ="playhead_container">\
                                     <h5 id="playhead">00:00</h5>\
                                   </div>\
@@ -821,6 +826,7 @@
       this.playheadLabel = document.querySelector('#playhead');
       this.videoTitle = document.querySelector('#title_header');
       this.pauseIcon = document.querySelector('#pause_icon');
+      this.playIcon = document.querySelector('#play_icon');
       this.spinnerIcon = document.querySelector("#spinner_icon");
       this.promoIcon = document.querySelector("#promo_icon");
       this.watermark = document.querySelector("#watermark_icon");
@@ -828,6 +834,8 @@
       // Set the image sources and text to their proper values
       this.videoTitle.innerHTML = titleElement.innerHTML;
       this.pauseIcon.src = PAUSE_ICON_SRC;
+      this.playIcon.src = PLAY_ICON_SRC;
+      this.playIcon.style.opacity = 0;
       this.promoIcon.src = promoImageElement.src;
       promoImageElement.src += "?t=" + new Date().getTime();
       this.watermark.src = WATERMARK_ICON_SRC;
@@ -841,7 +849,7 @@
       // The second array contains all of the controls that needed to be faded out
       this.scrubberFadeElements = [ this.playheadLabel, this.durationLabel, this.seekContainer ];
       this.controlsFadeElements = [ this.playheadLabel, this.durationLabel, this.seekContainer,
-                                    this.pauseIcon, this.videoTitle, this.promoIcon ];
+                                    this.videoTitle, this.promoIcon ];
       this.showControls();
     }
 
@@ -879,6 +887,19 @@
     }
 
     /**
+    Replace pause icon by play icon and within a specified delay, fade out play icon
+    **/
+    _Controls.prototype.handlePausePlayTransition = function(delay) {
+      this.pauseIcon.style.opacity = 0;
+      this.playIcon.style.webkitTransition = '';
+      this.playIcon.style.opacity = this.originalOpacity;
+      var self = this;
+      setTimeout(function() {
+        fadeEffect(self.playIcon, self.desiredOpacity, self.secondsToTransition);
+      }, delay);
+    }
+
+    /**
     Within a specified delay, fade out all the control-related elements
     **/
     _Controls.prototype.handleControlsTransition = function(delay) {
@@ -887,6 +908,7 @@
         for (var element in self.controlsFadeElements) {
           fadeEffect(self.controlsFadeElements[element], self.desiredOpacity, self.secondsToTransition);
         }
+        fadeEffect(self.pauseIcon, self.desiredOpacity, self.secondsToTransition);
       }, delay);
     }
 
@@ -902,14 +924,15 @@
     }
 
     /**
-    Shows all control related elements by setting elements to be visible at
-    opacity 1
+    Shows all control related elements by setting elements to be visible at opacity 1
     **/
     _Controls.prototype.showControls = function() {
       for (var element in this.controlsFadeElements) {
         this.controlsFadeElements[element].style.webkitTransition = '';
         this.controlsFadeElements[element].style.opacity = this.originalOpacity;
       }
+      this.pauseIcon.style.webkitTransition = '';
+      this.pauseIcon.style.opacity = this.originalOpacity;
     }
 
     /**
