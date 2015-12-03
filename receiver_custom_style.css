@@ -131,7 +131,7 @@
 
 #scrubber_wrapper {
   position:absolute;
-  height: 2%;
+  height: 3.5%;
   width: 100%;
   z-index: 10001;
   bottom: 10%;
@@ -161,7 +161,7 @@
   margin-left: 2.5%;
   width: 5%;
   text-align: left;
-  margin-top: 0.3%;
+  margin-top: 0.6%;
 }
 
 #playhead {
@@ -174,10 +174,10 @@
 
 #seek_bar {
   float: left;
-  height: 50%;
+  height: 28%;
   width: 80%;
   background-color:#fff;
-  margin-top: 0.3%;
+  margin-top: 0.6%;
 }
 
 #progress {
@@ -199,7 +199,7 @@
   height: 50%;
   margin-left: 2.5%;
   text-align: right;
-  margin-top: 0.3%;
+  margin-top: 0.6%;
 }
 
 #duration {

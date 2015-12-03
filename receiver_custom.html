@@ -51,8 +51,8 @@
     var OOYALA_PLAYER_URL = "//player.ooyala.com/v3/283b128fe1c24bc2ad3fc76a07cef963";
     var SPLASH_SCREEN_SRC = "./images/ooyala-logo.png";
     var LOGO_IMAGE_SRC = "./images/ooyala-logo.png";
-    var PAUSE_ICON_SRC = " ./images/pause.png";
-    var PLAY_ICON_SRC = " ./images/play.png";
+    var PAUSE_ICON_SRC = " ./images/pause.svg";
+    var PLAY_ICON_SRC = " ./images/play.svg";
     var WATERMARK_ICON_SRC = "./images/ooyala-logo-watermark.png";
     var CHROMECAST_DEBUG_TAG = "Chromecast-debug";
     var PLAYER_DEBUG_TAG = "Player-debug";
@@ -450,10 +450,6 @@
                   $("#cc_track").remove();
                 }
                 screenController.showScreen(loadingScreen);
-                // Re-initialize the elements to be in their initial position
-                if (controls) {
-                  controls.showControls();
-                }
                 break;
               case OO.EVENTS.PLAYBACK_READY:
                 if (autoPlay) {
@@ -469,15 +465,17 @@
               case OO.EVENTS.STREAM_PLAYING:
                 // Show the player screen
                 screenController.showScreen(playerScreen, "setClosedCaptionsLanguage(ccLanguage)");
-                // Fade out the title, pause, labels, and the scrubber
-                // Passing in a specified delay for timing out the transition
-                controls.handlePausePlayTransition(controls.getDelayInMillis());
+                // Fade out the title, labels, and the scrubber after a specified delay
+                controls.fadeOutControls(controls.getDelayInMillis());
+                // Replace pause icon by play icon and fade it out after a specified delay
+                controls.fadeOutPausePlay(controls.getDelayInMillis());
                 controls.setDisplaySpinner("none");
                 break;
               case OO.EVENTS.PAUSED:
                 // Show all the controls and make sure playhead has been updated
                 controls.showControls();
-                controls.handleControlsTransition(controls.getDelayInMillis());
+                // Fade out the title, labels, and the scrubber after a specified delay
+                controls.fadeOutControls(controls.getDelayInMillis());
                 controls.setValuePlayhead(currentPlayheadTimeInfo);
                 sendToAllSenders(JSON.stringify(arguments));
                 break;
@@ -489,6 +487,7 @@
                 window.mediaManager.setMediaElement(window.mediaElement);
                 
                 controls = new _Controls(rootElement);
+                controls.showControls();
                 // Handling timeouts
                 handleReceiverTimeouts(player);
                 break;
@@ -610,6 +609,7 @@
           var promo_url = (!data.promo_url) ? "" : data.promo_url;
           promoImageElement.src = promo_url  + "?t=" + new Date().getTime();
           controls.setUIELement(title, promo_url);
+          controls.showControls();
         }
       }
     }
@@ -850,7 +850,6 @@
       this.scrubberFadeElements = [ this.playheadLabel, this.durationLabel, this.seekContainer ];
       this.controlsFadeElements = [ this.playheadLabel, this.durationLabel, this.seekContainer,
                                     this.videoTitle, this.promoIcon ];
-      this.showControls();
     }
 
     /**
@@ -889,7 +888,7 @@
     /**
     Replace pause icon by play icon and within a specified delay, fade out play icon
     **/
-    _Controls.prototype.handlePausePlayTransition = function(delay) {
+    _Controls.prototype.fadeOutPausePlay = function(delay) {
       this.pauseIcon.style.opacity = 0;
       this.playIcon.style.webkitTransition = '';
       this.playIcon.style.opacity = this.originalOpacity;
@@ -902,13 +901,12 @@
     /**
     Within a specified delay, fade out all the control-related elements
     **/
-    _Controls.prototype.handleControlsTransition = function(delay) {
+    _Controls.prototype.fadeOutControls = function(delay) {
       var self = this;
       setTimeout(function() {
         for (var element in self.controlsFadeElements) {
           fadeEffect(self.controlsFadeElements[element], self.desiredOpacity, self.secondsToTransition);
         }
-        fadeEffect(self.pauseIcon, self.desiredOpacity, self.secondsToTransition);
       }, delay);
     }
 
