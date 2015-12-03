@@ -48,7 +48,7 @@
   </div>
   <script>
     // constants
-    var OOYALA_PLAYER_URL = "//player.ooyala.com/v3/283b128fe1c24bc2ad3fc76a07cef963";
+    var OOYALA_PLAYER_URL = "//player.ooyala.com/v3/283b128fe1c24bc2ad3fc76a07cef963"; 
     var SPLASH_SCREEN_SRC = "./images/ooyala-logo.png";
     var LOGO_IMAGE_SRC = "./images/ooyala-logo.png";
     var PAUSE_ICON_SRC = " ./images/pause.svg";
@@ -492,14 +492,8 @@
                 handleReceiverTimeouts(player);
                 break;
               case OO.EVENTS.SEEKED:
-                // Just show seek bar, duration and played labels
-                controls.showScrubber();
                 controls.setValuePlayhead(currentPlayheadTimeInfo);
-
-                // Fade out the scrubber when seeking in Playing State
-                if (player.getState() === OO.STATE.PLAYING) {
-                  controls.handleScrubberTransition();
-                }
+                controls.fadeOutScrubber();
                 sendToAllSenders(JSON.stringify(arguments));
                 break;
               case OO.EVENTS.BUFFERING:
@@ -542,9 +536,13 @@
                     ccResourceMap[languages[i]] = ccData.captions[languages[i]].url;
                   }
                 }
+              case OO.EVENTS.SEEK:
+                // Just show seek bar, duration and played labels
+                controls.showScrubber();
+                sendToAllSenders(JSON.stringify(arguments));
+                break;
               case OO.EVENTS.CLOSED_CAPTIONS_INFO_AVAILABLE:
               case OO.EVENTS.PLAYING:
-              case OO.EVENTS.SEEK:
                 sendToAllSenders(JSON.stringify(arguments));
                 break;
               case OO.EVENTS.ERROR:
@@ -879,7 +877,7 @@
     /**
     Fade out all scrubber-related elements
     **/
-    _Controls.prototype.handleScrubberTransition = function() {
+    _Controls.prototype.fadeOutScrubber = function() {
       for (var element in this.scrubberFadeElements) {
         fadeEffect(this.scrubberFadeElements[element], this.desiredOpacity, this.secondsToScrubberTransition);
       }
