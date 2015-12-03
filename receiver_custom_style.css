@@ -131,21 +131,37 @@
 
 #scrubber_wrapper {
   position:absolute;
-  height: 1%;
+  height: 3.5%;
   width: 100%;
   z-index: 10001;
   bottom: 10%;
-  vertical-align:middle;
+}
+
+#play_pause_wrapper {
+  float: left;
+  margin-left: 2.5%;
+  height: 100%;
+}
+
+#pause_icon {
+  height: 100%;
+}
+
+#play_icon {
+  position: absolute;
+  margin-left: 2.5%;
+  top: 0px;
+  left: 0px;
+  height: 100%;
 }
 
 #playhead_container {
   float: left;
-  height: 100%;
-  width: 5%;
+  height: 50%;
   margin-left: 2.5%;
-  margin-right: 2.5%;
-  vertical-align: middle;
+  width: 5%;
   text-align: left;
+  margin-top: 0.6%;
 }
 
 #playhead {
@@ -156,19 +172,34 @@
   margin: auto;
 }
 
-#pointer_wrapper {
-  position:absolute;
-  width:5.5%;
+#seek_bar {
+  float: left;
+  height: 28%;
+  width: 80%;
+  background-color:#fff;
+  margin-top: 0.6%;
+}
+
+#progress {
+  width: 0%;
+  height: 100%;
+  background-color: #746EE5;
+}
+
+#buffered_progress {
+  display: inline;
+  width: 0%;
+  height: 100%;
+  background: #746EE5;
+  opacity:  0.3;
 }
 
 #duration_wrapper {
   float: left;
-  height: 100%;
-  width: 5%;
+  height: 50%;
   margin-left: 2.5%;
-  margin-right: 2.5%;
-  vertical-align: middle;
   text-align: right;
+  margin-top: 0.6%;
 }
 
 #duration {
@@ -177,28 +208,6 @@
   line-height: 50%;
   opacity: 1;
   margin: auto;
-}
-
-#seek_bar {
-  float: left;
-  height: 100%;
-  width: 80%;
-  background-color:#fff;
-}
-
-#progress {
-  width:0%;
-  height: 100%;
-  background-color: #746EE5;
-}
-
-#buffered_progress {
-  position: absolute;
-  bottom: 0px;
-  width: 0%;
-  height: 100%;
-  background: #746EE5;
-  opacity:  0.3;
 }
 
 #title_wrapper {
@@ -227,12 +236,6 @@
 #watermark_icon {
   width: 100%;
   float: right;
-}
-
-#pause_icon {
-  position: absolute;
-  z-index: 10001;
-  width: 10%;
 }
 
 #spinner_icon {
@@ -292,5 +295,11 @@
   left: 0;
   bottom: 0;
   right: 0;
+}
+
+.bottom_left {
+  position: fixed;
+  left: 10;
+  bottom: 10;
 }
 /*** END GENERAL STYLING***/
