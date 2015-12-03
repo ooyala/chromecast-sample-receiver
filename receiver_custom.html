@@ -957,7 +957,7 @@
 
       //labels using the equivalent of OO.formatSeconds
       this.playheadLabel.innerHTML = timeFormat(played || 0);
-      this.durationLabel.innerHTML = timeFormat(maxTime || 0);
+      this.durationLabel.innerHTML = isLiveStream ? "Live" : timeFormat(maxTime || 0);
     }
 
     /**
