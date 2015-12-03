@@ -9,17 +9,15 @@
   <div id="splash_screen" style="width: 100%; height: 100%; background-color: black;">
       <img id="splash_image" style="display: block; width: 50%; margin: auto; position: absolute; top: 0; left: 0; bottom: 0; right: 0; vertical-align: middle" />
   </div>
-  <div id='player'>
-      <video id="tmp_video"></video>
-  </div>
+  <video id="tmp_video"></video>
   <script>
     // Locations of the images that will show on receiver screens. You are welcomed to configure these image locations.
     var SPLASH_SCREEN_SRC = "./images/ooyala-logo.png";
     var LOGO_IMAGE_SRC = "./images/ooyala-logo.png";
-    var PAUSE_ICON_SRC = " ./images/pause.png";
-    var PLAY_ICON_SRC = " ./images/play.png";
+    var PAUSE_ICON_SRC = "./images/pause.svg";
+    var PLAY_ICON_SRC = "./images/play.svg";
     var WATERMARK_ICON_SRC = "./images/ooyala-logo-watermark.png";
-    var V3_URL = "//player.ooyala.com/v3/51a0285082d44e37b5d3fbf2b4a9812b?debug=true&version=1050a3d975318bb0b3566e3e19044a08d6ae40cb";
+    var V3_URL = "//player.ooyala.com/v3/51a0285082d44e37b5d3fbf2b4a9812b?debug=true&version=80f97361ee65910d2032671e7a657271b257f4a2";
     var DEBUG_TAG = "Chromecast-debug";
    
     window.mediaManager = null;
