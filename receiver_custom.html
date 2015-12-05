@@ -48,7 +48,7 @@
   </div>
   <script>
     // constants
-    var OOYALA_PLAYER_URL = "//player.ooyala.com/v3/283b128fe1c24bc2ad3fc76a07cef963"; 
+    var OOYALA_PLAYER_URL = "//player.ooyala.com/v3/283b128fe1c24bc2ad3fc76a07cef963";
     var SPLASH_SCREEN_SRC = "./images/ooyala-logo.png";
     var LOGO_IMAGE_SRC = "./images/ooyala-logo.png";
     var PAUSE_ICON_SRC = " ./images/pause.svg";
@@ -403,7 +403,7 @@
       // prepare the player load script
       var playerJs = document.createElement("script");
       playerJs.type = "text/javascript";
-      playerJs.src = OOYALA_PLAYER_URL + "?" + (debug? ("debug=true&" + v3Version) : v3Version);
+      playerJs.src = OOYALA_PLAYER_URL + "?" + (debug? ("debug=true&" + v3Version) : v3Version); 
       var playerParams = {};
       if (data.params) {
         if (typeof data.params === "string") {
@@ -742,8 +742,21 @@
         element.removeEventListener('webkitTransitionEnd', listener, false);
       };
       element.addEventListener('webkitTransitionEnd', listener, false);
-      element.style.webkitTransition = 'opacity ' + time + 's' + " linear " ;
+      element.style.webkitTransition = 'opacity ' + time + 's linear';
       element.style.opacity = opacity;
+    }
+
+    /**
+    Function to finish fade effect of an element
+    **/
+    function finishFadeEffect(element) {
+      var listener = function() {
+        element.style.webkitTransition = '';
+        element.removeEventListener('webkitTransitionEnd', listener, false);
+      };
+      element.style.webkitTransition = '';
+      element.removeEventListener('webkitTransitionEnd', listener, false);
+      element.style.opacity = 0;
     }
 
     /**
@@ -887,6 +900,7 @@
     Replace pause icon by play icon and within a specified delay, fade out play icon
     **/
     _Controls.prototype.fadeOutPausePlay = function(delay) {
+      finishFadeEffect(this.pauseIcon);
       this.pauseIcon.style.opacity = 0;
       this.playIcon.style.webkitTransition = '';
       this.playIcon.style.opacity = this.originalOpacity;
