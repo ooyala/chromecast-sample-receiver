@@ -392,7 +392,7 @@
       currentEmbedCode = data.ec;
 
       // Change the V3 version here
-      var v3Version = (data && data.version) ? "version=" + data.version : "version=dbc071517076811a122a30ae52680398674b98cc";
+      var v3Version = (data && data.version) ? "version=" + data.version : "version=a2f5b6d44ae93878175f65e22f7aa5b2e634ff27";
 
       if (typeof data.debug === "boolean") {
         debug = data.debug;
@@ -472,6 +472,8 @@
                 controls.setDisplaySpinner("none");
                 break;
               case OO.EVENTS.PAUSED:
+                // Finish fading of of play button if this is the case
+                finishFadeEffect(controls.playIcon);
                 // Show all the controls and make sure playhead has been updated
                 controls.showControls();
                 // Fade out the title, labels, and the scrubber after a specified delay
@@ -754,8 +756,8 @@
         element.style.webkitTransition = '';
         element.removeEventListener('webkitTransitionEnd', listener, false);
       };
-      element.style.webkitTransition = '';
       element.removeEventListener('webkitTransitionEnd', listener, false);
+      element.style.webkitTransition = '';
       element.style.opacity = 0;
     }
 
@@ -901,7 +903,6 @@
     **/
     _Controls.prototype.fadeOutPausePlay = function(delay) {
       finishFadeEffect(this.pauseIcon);
-      this.pauseIcon.style.opacity = 0;
       this.playIcon.style.webkitTransition = '';
       this.playIcon.style.opacity = this.originalOpacity;
       var self = this;
