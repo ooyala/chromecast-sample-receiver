@@ -408,7 +408,12 @@
       playerJs.type = "text/javascript";
       playerJs.src = OOYALA_PLAYER_URL;
       if (debug || v3Version) {
-        playerJs.src += "?";
+        if (!playerJs.src.match(/\?$/)) {
+          playerJs.src += "?";
+        } else if (playerJs.src.match(/&/)) {
+          // URL contains ?, therefore it should contain name=value pair and we need to append "&"
+          playerJs.src += "&";
+        }
         if (debug) {
           playerJs.src += "debug=true";
           if (v3Version) {
