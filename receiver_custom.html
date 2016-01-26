@@ -392,9 +392,12 @@
       currentEmbedCode = data.ec;
 
       // Change the V3 version here
-      var v3Version = (data && data.version) ? "version=" + data.version : "version=a2f5b6d44ae93878175f65e22f7aa5b2e634ff27";
+      var v3Version;
+      if (data && data.version) {
+        v3Version = "version=" + data.version;
+      }
 
-      if (typeof data.debug === "boolean") {
+      if (data && typeof data.debug === "boolean") {
         debug = data.debug;
       } else {
         debug = false;
@@ -403,7 +406,19 @@
       // prepare the player load script
       var playerJs = document.createElement("script");
       playerJs.type = "text/javascript";
-      playerJs.src = OOYALA_PLAYER_URL + "?" + (debug? ("debug=true&" + v3Version) : v3Version);
+      playerJs.src = OOYALA_PLAYER_URL;
+      if (debug || v3Version) {
+        playerJs.src += "?";
+        if (debug) {
+          playerJs.src += "debug=true";
+          if (v3Version) {
+            playerJs.src += "&" + v3Version;
+          }
+        } else {
+          playerJs.src += v3Version;
+        }
+      }
+
       var playerParams = {};
       if (data.params) {
         if (typeof data.params === "string") {
