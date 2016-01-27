@@ -410,7 +410,7 @@
       if (debug || v3Version) {
         if (!playerJs.src.match(/\?$/)) {
           playerJs.src += "?";
-        } else if (playerJs.src.match(/=/)) {
+        } else if (playerJs.src.match(/\?[^=]+=/)) {
           // URL contains ?, therefore it should contain name=value pair and we need to append "&"
           playerJs.src += "&";
         }
