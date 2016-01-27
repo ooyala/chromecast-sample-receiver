@@ -409,8 +409,10 @@
       playerJs.src = OOYALA_PLAYER_URL;
       if (debug || v3Version) {
         if (playerJs.src.match(/\?/)) {
-          // URL contains ?, therefore contains name=value pair(s) after ?, so we should append "&"
-          playerJs.src += "&";
+            if (playerJs.src.match(/\?.+/)) {
+              // URL contains ? and some chars after it, presumably name=value pair(s), so we should append "&"
+              playerJs.src += "&";
+            }
         } else {
           playerJs.src += "?";
         }
