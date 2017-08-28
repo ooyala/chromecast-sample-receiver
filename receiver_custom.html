@@ -438,8 +438,6 @@
         playerParams['autoplay'] = true;
       }
       autoPlay = playerParams['autoplay'];
-      // PLAYER-1388 for HLS and other mux formats we need a handle the autoplay manually 
-      delete playerParams.autoplay;
       ccLanguage = '';
       if (!!playerParams['ccLanguage']) {
         // player paramteres may contain ccLanguage: "en" (or other language), in which case
