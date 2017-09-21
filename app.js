@@ -30,7 +30,7 @@
 
  // Closed Captioning resources
  var ccResourceMap = {}; // Resource map of closed captions, it has format: "language" => URL
- var ccLanguage = 'en'; // currently used closed captions language, empty if none
+ var ccLanguage = ''; // currently used closed captions language, empty if none
  var isLiveStream = false; // used for closed captions on live assets
 
  // loading screen elements
@@ -59,7 +59,7 @@
 
  // Initialize Chromecast receiver application
  window.onload = function() {
-   //cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.DEBUG);
+   cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.DEBUG);
    setupMediaManager();
    setupCastReceiver();
    setupMessageBus();
@@ -364,24 +364,6 @@ function printDebugMessage(command, event, ignorePattern) {
    var playerJs = document.createElement("script");
    playerJs.type = "text/javascript";
    playerJs.src = OOYALA_PLAYER_URL;
-  /*  if (debug || v3Version) {
-     if (playerJs.src.match(/\?/)) {
-         if (playerJs.src.match(/\?.+/)) {
-           // URL contains ? and some chars after it, presumably name=value pair(s), so we should append "&"
-           playerJs.src += "&";
-         }
-     } else {
-       playerJs.src += "?";
-     }
-     if (debug) {
-       playerJs.src += "debug=true";
-       if (v3Version) {
-         playerJs.src += "&" + v3Version;
-       }
-     } else {
-       playerJs.src += v3Version;
-     }
-   } */
 
    var playerParams = {};
    if (data.params) {
@@ -401,11 +383,6 @@ function printDebugMessage(command, event, ignorePattern) {
      // we should set up ccLanguage variable so that playback starts with closed captioning
      ccLanguage = playerParams['ccLanguage'];
    }
-
-   //data.ec = "A2MGFyYTE6Dv_7o2E3zWqCcYAUyqO4t9";
-   //playerParams.embedToken = "http://player.ooyala.com/sas/embed_token/lhNmYyOuUnCvRiHi5NbFBBLOG4xm/A2MGFyYTE6Dv_7o2E3zWqCcYAUyqO4t9?api_key=lhNmYyOuUnCvRiHi5NbFBBLOG4xm.S9VRE&expires=3042186829&&&&signature=AgkvXZW57DrxsLDdOiVEBWqkWPxxz75olqZfS505CeU";
-   //var extra = {"api_ssl_server":"https://player-staging.ooyala.com","api_server":"http://player-staging.ooyala.com","auth_ssl_server":"https://player-staging.ooyala.com/sas","auth_server":"http://player-staging.ooyala.com/sas"};
-   //Object.assign(playerParams, extra);
 
    if (!playerParams.onCreate) {
      playerParams.onCreate = function(player) {
