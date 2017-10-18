@@ -123,7 +123,7 @@ function onGetStatus(event) {
 function onPause(event) {
   printDebugMessage("onPause", event);
   window.mediaManager.onPauseOrig(event);
-  player.mb.publish(OO.EVENTS.PAUSE);
+  player.pause();
   window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
 }
 
@@ -133,7 +133,7 @@ function onPause(event) {
 function onPlay(event) {
   printDebugMessage("onPlay", event);
   window.mediaManager.onPlayOrig(event);
-  player.mb.publish(OO.EVENTS.INITIAL_PLAY);
+  player.play();
   window.mediaManager.sendStatus(event.senderId, event.data.requestId, true);
 }
 
