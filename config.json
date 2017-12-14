@@ -3,5 +3,6 @@
     "images": {
         "logo" : "logo.svg"
     },
-    "logLevel": "warn"
+    "logLevel": "warn",
+    "skin": {}
 }

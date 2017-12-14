@@ -58,7 +58,6 @@ class CastPlayer {
      * @memberof CastPlayer
      */
     setAsset(data) {
-        logger.debug(LOG_PREFIX, "New asset params:", data);
         this.ec = data.ec || null;
         if (typeof data.params === 'string') {
             logger.warn(LOG_PREFIX, "Params are not a proper JSON object:", data.params);

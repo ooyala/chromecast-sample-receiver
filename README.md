@@ -25,6 +25,19 @@ Before to proceed to build the receiver, you must have installed the following:
     ```
 4. Once the installation of all the dependencies finished you are able to build your project.
 
+## Customization
+The receiver has a series of information that can/should be updated in order to reflect your brand preferences.
+
+| Name             | Type   | Default                 | Description                    |
+|------------------|--------|-------------------------|--------------------------------|
+| playerBrandingId | string | ooyala test player id   | This is the player Id provided at Ooyala Backlot site |
+| images           | object | `{"logo": "logo.svg"}`  | This contains the image filename used to set the splash screen. The default value is the Ooyala logo and can be updated to reflect your brand image. If you change the value with your own filename you must add the image at the `assets` directory |
+| logLevel         | string | warn                    | This set the level of the messages to show at the developer console. It can be any of the following values: <ul><li>trace</li><li>debug</li><li>warn</li><li>error</li></ul> There is more information about this at the __Debug__ section below.| 
+| skin             | object | `{}`                    | Here you can customize the appearance of the player UI. For more information please visit the ooyala documentation at https://help.ooyala.com/video-platform/concepts/pbv4_customize.html and check the `inline` option which used to override the default values. |
+
+
+
+
 ## Build
 As part of the build process the following is needed:
 - Ooyala Plyaer ID (*required*)
@@ -34,15 +47,7 @@ About the logo image used by the receiver, by default the Ooyala image is provid
 
 Once you get the above information then you can proceed to build the project:
 
-1. Open the file `config.json` and replace the information with yours:
-    ```json
-    {
-        "playerBrandingId" : "<Place your ooyala player id here>",
-        "images": {
-            "logo" : "<Place the name of the logo file with extension here e.g. 'logo.svg' or leave the default value>"
-        }
-    }
-    ```
+1. Update the file `config.json` if you need to do some customatization.
 2. Go to the command line at the root of the project and run the following:
     ```shell
     $ npm run build

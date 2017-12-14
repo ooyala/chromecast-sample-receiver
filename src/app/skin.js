@@ -7,7 +7,10 @@
  * @module skin
  * @return {object} skin
  */
-const skin = {
+
+import _defaultsDeep from 'lodash/defaultsdeep'
+
+var defaultSkin = {
     startScreen: {
         showPlayButton: true,
         showTitle: true,
@@ -32,5 +35,8 @@ const skin = {
         ]
     }
 };
+
+// extend the default values with custom skin configurations
+var skin = _defaultsDeep(process.env.SKIN, defaultSkin);
 
 export default skin;

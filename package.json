@@ -22,6 +22,7 @@
     "watch": "webpack --watch"
   },
   "dependencies": {
+    "lodash.defaultsdeep": "^4.6.0",
     "loglevel": "^1.6.0"
   }
 }

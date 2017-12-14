@@ -8,12 +8,14 @@ const config = require("./config.json")
 
 var HTMLWebpackPluginConfig = new HtmlWebpackPlugin({
     template: __dirname + '/src/index.html',
-    filename: __dirname + '/dist/index.html',
+    filename: __dirname + '/dist/receiver.html',
     inject: 'body',
     hash: true,
     playerId: config.playerBrandingId,
     logo: config.images.logo
 });
+
+var customSkin = (typeof config.skin === "object") ? config.skin : {};
 
 module.exports = {
     entry : './src/app/cast.js',
@@ -29,12 +31,13 @@ module.exports = {
         }),
         new webpack.DefinePlugin({
             'process.env': {
-                'LOG_LEVEL': JSON.stringify(config.logLevel.toUpperCase())
+                'LOG_LEVEL': JSON.stringify(config.logLevel.toUpperCase()),
+                'SKIN': customSkin
             }
         }),
-        new UglifyJSPlugin({
+        /* new UglifyJSPlugin({
             sourceMap: true
-        }),
+        }), */
         new CopyWebpackPlugin([
             { from: './assets', to: 'images' }
         ], 
