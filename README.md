@@ -1,5 +1,5 @@
-# Chromecast Receiver + OOyala Player v4
-This repository contains the implementation of Google cast sdk as a receiver for video playback through Chromecast devices. It has an adaptation of OOyala Player v4.
+# Chromecast Receiver + Ooyala Player v4
+This repository contains the implementation of Google cast sdk as a receiver for video playback through Chromecast devices. It has an adaptation of Ooyala Player v4.
 
 ## Prerequisites
 - Read the developer documentation at http://support.ooyala.com/developers/documentation/concepts/chromecast_and_ooyala.html
@@ -10,7 +10,7 @@ This repository contains the implementation of Google cast sdk as a receiver for
 - Purchase a Chromecast device
 
 ## Customization
-The receiver on his default state has the OOyala logo as the splash screen, in order to use your own brand image you need to do the following:
+The receiver on his default state has the Ooyala logo as the splash screen, in order to use your own brand image you need to do the following:
 
 1. Add your new image at the `images` folder.
 2. Update the `receiver.html` file and update the `img` tag at the `src` attribute with your image filename.
