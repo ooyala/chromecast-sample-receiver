@@ -2,7 +2,7 @@
 This repository contains the implementation of Google cast sdk as a receiver for video playback through Chromecast devices. It has an adaptation of Ooyala Player v4.
 
 ## Prerequisites
-- Read the developer documentation at http://support.ooyala.com/developers/documentation/concepts/chromecast_and_ooyala.html
+- Read the developer documentation at http://help.ooyala.com/video-platform/concepts/chromecast/index.html
 - Facilitate your own hosting infrastructure for receiver applications (you must set up CORS enablement on the CDN you use for content serving)
 - Register your receiver HTML with [Google Cast Registration](https://cast.google.com/u/0/publish/#/signup)
 - For iOS, view the sample Chromecast Sender [iOS App](https://github.com/ooyala/ios-sample-apps/tree/master/ChromecastSampleApp)
