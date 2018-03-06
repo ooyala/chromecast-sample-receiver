@@ -1,37 +1,36 @@
 /**
  * idleTimer module. This module handles the creation of timeouts in order to detect
  * if the devices was not used for some time and shutdown the app session
- * 
+ *
  * @module uiManager
  */
 import * as logger from 'loglevel'
-import castManager from './receiverManager'
 
 const timeout = {
     PAUSED: 1000 * 60 * 5, // 5 minutes
-    IDLE: 1000 * 60 * 10 // 5 minutes
+    IDLE: 1000 * 60 * 10 // 10 minutes
 };
 
-var idleTimerId = null;
+let idleTimerId = null;
 
 
 /**
  * setIdle destroy any current timeout and creates a new one with the
  * given time
- * 
- * @param {number} time 
+ *
+ * @param {number} time
  */
-function setIdle (time) {
+function setIdle(time) {
     logger.info('Timer Idle for:', time);
     clearTimeout(idleTimerId);
     if (time) {
-        idleTimerId = setTimeout(()=>{
-            castManager.stop();
+        idleTimerId = setTimeout(() => {
+            cast.framework.CastReceiverContext.getInstance().stop();
         }, time)
     }
-};
+}
 
 export default {
-    setIdle : setIdle,
-    TIMEOUT : timeout
+    setIdle: setIdle,
+    TIMEOUT: timeout
 }

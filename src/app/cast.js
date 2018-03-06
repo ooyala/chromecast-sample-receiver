@@ -1,10 +1,9 @@
 /**
- * cast module contains the start point to create an Ooyala player and install it on the 
+ * cast module contains the start point to create an Ooyala player and install it on the
  * chromecast receiver app.
- * 
+ *
  * @module cast
  */
-import castManager from './receiverManager'
 import CastPlayer from './player'
 import * as logger from 'loglevel'
 import UIManager from './uiManager'
@@ -12,53 +11,52 @@ import Timer from './idleTimer'
 
 import '../styles/player.css'
 
-var mediaManager = null;
-var castPlayer = new CastPlayer();
+const CASTNAMESPACE = 'urn:x-cast:ooyala';
+const LOG_PREFIX = 'MessageInterceptor:';
+const castPlayer = new CastPlayer();
 
 logger.setLevel(process.env.LOG_LEVEL);
 UIManager.setStatusCast(UIManager.status.LOADING);
+const context = cast.framework.CastReceiverContext.getInstance();
+const playerManager = context.getPlayerManager();
 
-// create a new instance of the Media Manager to interact with the sender app request
-mediaManager = new cast.receiver.MediaManager(castPlayer);
+playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, loadRequestData => {
+    logger.info(LOG_PREFIX, "LOAD", loadRequestData);
+    castPlayer.setAsset(loadRequestData.media.customData);
+    castPlayer.load();
+    playerManager.setMediaElement(castPlayer.OOPlayer);
+    return loadRequestData;
+});
 
-// backup of the original onLoad event handler to use it after our custom logic
-mediaManager.origOnLoad = mediaManager.onLoad;
-
-/**
- * onLoad assign a new implementation of the onLoad event that can sets the needed information from the 
- * incoming event
- */
-mediaManager.onLoad = function(e) {
-    logger.info("MediaManager:onLoad", e);
-    castPlayer.setAsset(e.data.media.customData);
-    mediaManager.origOnLoad(e);
-}
-
-
-// backup of the original onPause event handler to use it after our custom logic
-mediaManager.origPause = mediaManager.onPause;
-
-/**
- * onPause overrides the default behaviour to setup the default timeout when an assets it's getting paused 
- */
-mediaManager.onPause = function(e) {
-    logger.info("MediaManager:onPause", e);
+playerManager.setMessageInterceptor(cast.framework.messages.MessageType.PAUSE, requestData => {
+    logger.info(LOG_PREFIX, "PAUSE", requestData);
     Timer.setIdle(Timer.TIMEOUT.PAUSED);
-    mediaManager.origPause(e);
-}
+    castPlayer.pause();
+    return requestData;
+});
 
-
-// backup of the original onPlay event handler to use it after our custom logic
-mediaManager.origPlay = mediaManager.onPlay;
-
-/**
- * onPlay override the original logic for play just to clear the timeout, if one was created 
- */
-mediaManager.onPlay = function(e) {
-    logger.info("MediaManager:onPlay", e);
+playerManager.setMessageInterceptor(cast.framework.messages.MessageType.PLAY, requestData => {
+    logger.info(LOG_PREFIX, "PLAY", requestData);
     Timer.setIdle();
-    mediaManager.origPlay(e);
-}
+    castPlayer.play();
+    return requestData;
+});
 
+playerManager.setMessageInterceptor(cast.framework.messages.MessageType.SET_VOLUME, volumeRequestData => {
+    logger.info(LOG_PREFIX, "SET_VOLUME", volumeRequestData);
+    castPlayer.setVolume(volumeRequestData.volume);
+    return volumeRequestData;
+});
 
-castManager.start();
+playerManager.setMessageInterceptor(cast.framework.messages.MessageType.SEEK, seekRequestData => {
+    logger.info(LOG_PREFIX, "SEEK", seekRequestData);
+    castPlayer.seek(seekRequestData.currentTime);
+    castPlayer.onSeeked(_, seekRequestData.currentTime);
+    return seekRequestData;
+});
+
+context.addCustomMessageListener(CASTNAMESPACE, e => {
+    castPlayer.getMessageHandler(e);
+});
+
+context.start();

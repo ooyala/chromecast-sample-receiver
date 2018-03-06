@@ -1,4 +1,3 @@
-import castManager from './receiverManager'
 import * as logger from 'loglevel'
 import UIManager from './uiManager'
 import skin from './skin'
@@ -12,10 +11,12 @@ const PLAYERNAMESPACE = 'chromecast';
 // prefix used to build log messages from this module
 const LOG_PREFIX = 'Player:';
 
+const context = cast.framework.CastReceiverContext.getInstance();
+
 /**
  * CastPlayer implements cast.receiver.media.Player interface from Google cast sdk for receivers.
  * This class responds to MediaManager requests and proxy them to the Ooyala player API
- * 
+ *
  * @class CastPlayer
  * @implements {cast.receiver.media.Player}
  */
@@ -25,15 +26,14 @@ class CastPlayer {
      * @memberof CastPlayer
      */
     constructor() {
-        this.OOPlayer = null; 
+        this.OOPlayer = null;
         this.endedCallback = null;
         this.errorCallback = null;
         this.loadCallback = null;
         this.idleTimerId = null;
         this.skinInstance = null;
         this.ec = null;
-        this.mb = null;
-        this.state = cast.receiver.media.PlayerState.IDLE;
+        this.state = null;
         this.playhead = {};
         this.params = {
             onCreate : this.onCreateHandlers.bind(this),
@@ -42,7 +42,6 @@ class CastPlayer {
                 inline: skin
             }
         }
-        this.setMessageBus();
     }
 
 
@@ -51,7 +50,7 @@ class CastPlayer {
      * and will extract the embedcode and params. The params could be passed from the sender
      * as a JSON object or string, if the typeof is string a conversion to Object will be
      * perfomed
-     * 
+     *
      * The params object will be merged with the default values for the Ooyala player
      *
      * @param {object} data custom data from sender
@@ -75,21 +74,10 @@ class CastPlayer {
 
 
     /**
-     * setMessageBus creates a message bus with the namespace defined at CASTNAMESPACE
-     * 
-     * @memberof CastPlayer
-     */
-    setMessageBus(){
-        this.mb = castManager.getCastMessageBus(CASTNAMESPACE, cast.receiver.CastMessageBus.MessageType.JSON);
-        this.mb.onMessage = this.getMessageHandler.bind(this);
-    }
-
-    
-    /**
      * getMessageHandler handles the incoming events at the created message bus and responds for each type
      * of incoming actions on the message request
-     * 
-     * @param {cast.receiver.CastMessageBus.Event} e 
+     *
+     * @param {cast.receiver.CastMessageBus.Event}
      * @memberof CastPlayer
      */
     getMessageHandler(e) {
@@ -99,13 +87,13 @@ class CastPlayer {
                 this.setClosedCaptions(e.data.data);
                 break;
             case "getstatus":
-                var status = {
+                const status = {
                     state: this.OOPlayer.getState(),
                     playhead: this.playhead,
                     embed: this.OOPlayer.getEmbedCode()
-                }
+                };
                 logger.info(LOG_PREFIX,'MessageBus status:', status);
-                this.mb.send(e.senderId, status);
+                context.sendCustomMessage(CASTNAMESPACE, e.senderId, status);
                 break;
             case "error":
                 logger.error(LOG_PREFIX,"MessageBus Sender Error:", e.data.message);
@@ -113,63 +101,33 @@ class CastPlayer {
         }
     }
 
-      
+
     /**
      * load handle the creation/update of the Ooayala player v4 using the embedcode and params provied
      * on the LOAD event at the mediaManager
-     * 
+     *
      * @memberof CastPlayer
      */
     load() {
         UIManager.hideSplashScreen();
         if (!this.OOPlayer) {
+            logger.info("Created", this.ec, this.params)
             this.OOPlayer = OO.Player.create('player', this.ec, this.params);
         } else {
             if (this.OOPlayer.getEmbedCode() === this.ec) {
                 this.OOPlayer.mb.publish(OO.EVENTS.REPLAY);
+                logger.info("Replay", this.ec, this.params)
             } else {
                 this.OOPlayer.setEmbedCode(this.ec, this.params);
             }
-        }        
+        }
     }
 
-    
-    /**
-     * editTracksInfo is not implemented but it was keep it to follow the full implementation of the
-     * player interface provied by Google cast sdk
-     * 
-     * @memberof CastPlayer
-     */
-    editTracksInfo() {
-    }
-
-    /**
-     * getCurrentTimeSec returns the current time of the asset
-     * 
-     * @returns {number} time in seconds
-     * @memberof CastPlayer
-     */
-    getCurrentTimeSec() {
-        return (this.OOPlayer) ? this.OOPlayer.getPlayheadTime() : null;
-    }
-
-    
-    /**
-     * getDurationSec returns the duration of the asset
-     * 
-     * @returns {number} time in seconds
-     * @memberof CastPlayer
-     */
-    getDurationSec() {
-        return (this.OOPlayer) ? this.OOPlayer.getDuration() : null;
-    }
-
-    
     /**
      * setClosedCaptions set the closed caption language for the asset. The value
      * needs to be one of the given by the asset info
-     * 
-     * @param {string} lang 
+     *
+     * @param {string} lang
      * @memberof CastPlayer
      */
     setClosedCaptions(lang) {
@@ -180,15 +138,16 @@ class CastPlayer {
         this.OOPlayer.setClosedCaptionsLanguage(lang);
     }
 
-    
+
     /**
      * getState returns the actual state of the player. This method will convert from
      * Ooyala player states to google cast states
-     * 
+     *
      * @returns {cast.receiver.media.PlayerState}
      * @memberof CastPlayer
      */
     getState() {
+        logger.info("Player - getState");
         if (this.OOPlayer) {
             switch (this.OOPlayer.getState()) {
                 case OO.STATE.LOADING:
@@ -210,10 +169,10 @@ class CastPlayer {
         return this.state;
     }
 
-    
+
     /**
      * play executes the play method on the Ooyala player
-     * 
+     *
      * @memberof CastPlayer
      */
     play() {
@@ -222,7 +181,7 @@ class CastPlayer {
 
     /**
      * pause executes the pause method on the Ooyala player
-     * 
+     *
      * @memberof CastPlayer
      */
     pause() {
@@ -231,18 +190,18 @@ class CastPlayer {
 
     /**
      * reset is not implemented but it was keep it to follow the full implementation of the
-     * player interface provied by Google cast sdk 
-     * 
+     * player interface provied by Google cast sdk
+     *
      * @memberof CastPlayer
      */
     reset() {
     }
 
-    
+
     /**
-     * seek sets the current position of the player on the asset from the beginning 
-     * 
-     * @param {number} time 
+     * seek sets the current position of the player on the asset from the beginning
+     *
+     * @param {number} time
      * @memberof CastPlayer
      */
     seek(time) {
@@ -252,8 +211,8 @@ class CastPlayer {
     /**
      * setVolume sets the current volume of the Ooyala player. The value must be betweeen
      * 0 and 1, inclusive
-     * 
-     * @param {any} volume 
+     *
+     * @param {any} volume
      * @memberof CastPlayer
      */
     setVolume(volume) {
@@ -261,26 +220,10 @@ class CastPlayer {
     }
 
     /**
-     * getVolume returns the current volume value of the Ooyala player. The value is converted
-     * to be an instance of cast.receiver.media.Volume
-     * 
-     * @returns {cast.receiver.media.Volume}
-     * @memberof CastPlayer
-     */
-    getVolume() {
-        var volume = new cast.receiver.media.Volume();
-        volume.level = this.OOPlayer.getVolume();
-        volume.muted = false;
-        logger.info(LOG_PREFIX,'Volume:', volume);
-        return volume;
-    }
-
-    
-    /**
      * registerEndedCallback stores the given function as a callback to be executed once
      * the asset is played
-     * 
-     * @param {function} endedCallback 
+     *
+     * @param {function} endedCallback
      * @memberof CastPlayer
      */
     registerEndedCallback(endedCallback) {
@@ -290,8 +233,8 @@ class CastPlayer {
     /**
      * registerErrorCallback stores the given function as a callback to be executed if the
      * Ooyala player found an error
-     * 
-     * @param {function} errorCallback 
+     *
+     * @param {function} errorCallback
      * @memberof CastPlayer
      */
     registerErrorCallback(errorCallback) {
@@ -301,17 +244,17 @@ class CastPlayer {
     /**
      * registerLoadCallback stores the given function as a callback to be executed once
      * the player is created
-     * 
-     * @param {function} loadCallback 
+     *
+     * @param {function} loadCallback
      * @memberof CastPlayer
      */
     registerLoadCallback(loadCallback) {
        this.loadCallback = loadCallback;
-    }   
+    }
 
     /**
      * unregisterEndedCallback sets to null the reference for the endedCallback
-     * 
+     *
      * @memberof CastPlayer
      */
     unregisterEndedCallback() {
@@ -319,17 +262,17 @@ class CastPlayer {
     }
 
     /**
-     * unregisterErrorCallback sets to null the reference for the errorCallback 
-     * 
+     * unregisterErrorCallback sets to null the reference for the errorCallback
+     *
      * @memberof CastPlayer
      */
     unregisterErrorCallback() {
         this.errorCallback = null;
     }
-    
+
     /**
      * unregisterLoadCallback sets to null the reference for the loadCallback
-     * 
+     *
      * @memberof CastPlayer
      */
     unregisterLoadCallback() {
@@ -340,11 +283,11 @@ class CastPlayer {
     /**
      * onCreateHandlers receives the instance of the Ooyala player and create event listeners
      * for the Ooyala player events
-     * 
-     * @param {OO.Player} player 
+     *
+     * @param {OO.Player} player
      * @memberof CastPlayer
      */
-    onCreateHandlers (player) {  
+    onCreateHandlers (player) {
         player.mb.subscribe(OO.EVENTS.PLAYBACK_READY, PLAYERNAMESPACE, this.onPlaybackReady.bind(this));
         player.mb.subscribe(OO.EVENTS.PLAYING, PLAYERNAMESPACE, this.notifySenders.bind(this));
         player.mb.subscribe(OO.EVENTS.PLAYHEAD_TIME_CHANGED, PLAYERNAMESPACE, this.onPlayheadChanged.bind(this));
@@ -360,12 +303,12 @@ class CastPlayer {
     /**
      * notifySenders sends messages through the message bus to all the senders. It will take all
      * the arguments passed use them as part of the message body
-     * 
+     *
      * @memberof CastPlayer
      */
     notifySenders() {
         let message = Object.assign({}, arguments);
-        this.mb.broadcast(message);
+        context.sendCustomMessage(CASTNAMESPACE, undefined, message);
     }
 
 
@@ -373,15 +316,15 @@ class CastPlayer {
      * onSeeked handles the player event for OO.EVENTS.SEEKED and try to move the scrubber bar
      * to the seeked position if it's possible. After move the scrubber bar it will notify to all
      * the senders about the event
-     * 
-     * @param {string} event 
-     * @param {number} time 
+     *
+     * @param {string} event
+     * @param {number} time
      * @memberof CastPlayer
      */
     onSeeked(event, time) {
         // if the player is in PAUSE state then try to update the scrubber bar to the
         // actual time
-        var skin = this.OOPlayer.modules.find((m) => {return m.name == "Html5Skin";});
+        const skin = this.OOPlayer.modules.find((m) => {return m.name == "Html5Skin";});
         try {
             if (skin){
                 skin.instance.updateSeekingPlayhead(time);
@@ -392,11 +335,10 @@ class CastPlayer {
         this.notifySenders.apply(this, arguments);
     }
 
-    
     /**
      * onPlaybackReady executes the loadCallback once the Ooyala player it's ready to
      * play the asset
-     * 
+     *
      * @memberof CastPlayer
      */
     onPlaybackReady() {
@@ -405,10 +347,9 @@ class CastPlayer {
         }
     }
 
-    
     /**
-     * onPlayheadChanged stores the playback time status and notify to all senders 
-     * 
+     * onPlayheadChanged stores the playback time status and notify to all senders
+     *
      * @memberof CastPlayer
      */
     onPlayheadChanged() {
@@ -416,12 +357,12 @@ class CastPlayer {
         this.notifySenders.apply(this, arguments);
     }
 
-    
+
     /**
-     * onPlayed Shows the IDLE screen once the asset is played and sets the default timeout. 
+     * onPlayed Shows the IDLE screen once the asset is played and sets the default timeout.
      * It will execute the endedCallback registered by the MediaManager and notify to all
      * senders
-     * 
+     *
      * @memberof CastPlayer
      */
     onPlayed() {
@@ -430,15 +371,15 @@ class CastPlayer {
         if (this.endedCallback !== null) {
             this.endedCallback();
         }
-        this.notifySenders.apply(this, arguments);       
+        this.notifySenders.apply(this, arguments);
     }
 
-    
+
     /**
      * onError receives the current error from the Ooyala player and will logs the error information
-     * 
-     * @param {string} e 
-     * @param {string} error 
+     *
+     * @param {string} e
+     * @param {string} error
      * @memberof CastPlayer
      */
     onError(e, error) {
@@ -448,14 +389,14 @@ class CastPlayer {
         logger.error(LOG_PREFIX, 'Error:', error);
     }
 
-    
+
     /**
-     * onApiError logs the error from Ooyala player that are related with API requests 
-     * 
-     * @param {string} e 
-     * @param {number} code 
-     * @param {string} message 
-     * @param {string} url 
+     * onApiError logs the error from Ooyala player that are related with API requests
+     *
+     * @param {string} e
+     * @param {number} code
+     * @param {string} message
+     * @param {string} url
      * @memberof CastPlayer
      */
     onApiError (e, code, message, url) {
@@ -464,8 +405,6 @@ class CastPlayer {
         }
         logger.error(LOG_PREFIX, 'API Error:', code, message, url);
     }
-
-};
-
+}
 
 export default CastPlayer;
