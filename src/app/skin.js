@@ -10,7 +10,7 @@
 
 import _defaultsDeep from 'lodash/defaultsdeep'
 
-var defaultSkin = {
+const defaultSkin = {
     startScreen: {
         showPlayButton: true,
         showTitle: true,
@@ -27,16 +27,16 @@ var defaultSkin = {
         showTitle: true,
         showDescription: true
     },
-    buttons : {
-        desktopContent : [
-            {"name":"playPause", "location":"controlBar", "whenDoesNotFit":"keep", "minWidth":45 },
-            {"name":"live", "location":"controlBar", "whenDoesNotFit":"keep", "minWidth":45},
-            {"name":"timeDuration", "location":"controlBar", "whenDoesNotFit":"drop", "minWidth":145 }
+    buttons: {
+        desktopContent: [
+            {"name": "playPause", "location": "controlBar", "whenDoesNotFit": "keep", "minWidth": 45},
+            {"name": "live", "location": "controlBar", "whenDoesNotFit": "keep", "minWidth": 45},
+            {"name": "timeDuration", "location": "controlBar", "whenDoesNotFit": "drop", "minWidth": 145}
         ]
     }
 };
 
 // extend the default values with custom skin configurations
-var skin = _defaultsDeep(process.env.SKIN, defaultSkin);
+const skin = _defaultsDeep(process.env.SKIN, defaultSkin);
 
 export default skin;
