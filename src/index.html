@@ -7,14 +7,24 @@
     <title>Ooyala Receiver</title>
 
     <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
-    <script type="text/javascript" src="//player.ooyala.com/core/<%= htmlWebpackPlugin.options.playerId %>?plugins=bm"></script>    
+    <script type="text/javascript"
+            src="//player.ooyala.com/core/<%= htmlWebpackPlugin.options.playerId %>?plugins=bm"></script>
 </head>
 <body>
-    <div id="splash-screen" class="fbox-container fs">
-        <img id="splash-image" src="images/<%= htmlWebpackPlugin.options.logo %>" />
-        <div id="status-cast">
-        </div>
+<div id="splash-screen" class="fbox-container fs">
+    <img id="splash-image" src="images/<%= htmlWebpackPlugin.options.logo %>"/>
+    <div id="status-cast">
     </div>
-    <div id="player"></div>
+</div>
+<div id="player"></div>
+<script>
+    window.startCast(
+        {
+            pauseScreen: {
+                showDescription: false
+            }
+        },
+        mb => mb.subscribe(OO.EVENTS.PLAYHEAD_TIME_CHANGED, PLAYERNAMESPACE, () => console.log("test")));
+</script>
 </body>
 </html>

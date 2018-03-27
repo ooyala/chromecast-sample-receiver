@@ -9,7 +9,7 @@ const config = require("./config.json")
 var HTMLWebpackPluginConfig = new HtmlWebpackPlugin({
     template: __dirname + '/src/index.html',
     filename: __dirname + '/dist/receiver.html',
-    inject: 'body',
+    inject: 'head',
     hash: true,
     playerId: config.playerBrandingId,
     logo: config.images.logo
