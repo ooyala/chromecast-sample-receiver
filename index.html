@@ -31,15 +31,15 @@
             onCreate: player =>
                 player.mb.subscribe(
                     '*',
-                    'urn:x-cast:testnamespace',
-                    event => {
-                        console.log('Event from outer onCreate function', event);
+                    'cast-sample-app',
+                    (event, parameters) => {
+                        console.log(`Notification about ${event} with the following parameters ${parameters}`);
                     }
                 )
         };
 
         OOCast.init(
-            'urn:x-cast:testnamespace',
+            'urn:x-cast:ooyala',
             pageLevelParams
         );
     </script>
