@@ -12,11 +12,21 @@
 </head>
 
 <body>
+    <!-- Splash screen container -->
+    <!-- Splash screen is the screen that is displayed before the actual cast starts -->
+    <!-- It can display a logo and a status -->
     <div id="splash-screen" class="fbox-container fs">
+        <!-- Logo image that will be displayed on the splash screen -->
+        <!-- Having this element on the page is required to display the logo -->
         <img id="splash-image" src="images/logo.svg" />
+        
+        <!-- Chromecast status container that will display the status on splash screen -->
+        <!-- Having this element on the page is required to display the status -->
         <div id="status-cast">
         </div>
     </div>
+    <!-- Container for Player V4 -->
+    <!-- Having this element on the page is required -->
     <div id="player"></div>
     <script type="text/javascript" src="//player.ooyala.com/static/chromecast/latest/cast.min.js"></script>
     <script>
