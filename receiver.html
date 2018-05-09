@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,14 +8,51 @@
     <title>Ooyala Receiver</title>
 
     <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
-    <script type="text/javascript" src="//player.ooyala.com/core/e48c9b51282d406f957c666149763424?plugins=bm,cast"></script>    
+    <script type="text/javascript" src="//player.ooyala.com/core/e48c9b51282d406f957c666149763424?plugins=bm,cast"></script>
 </head>
+
 <body>
+    <!-- Splash screen container -->
+    <!-- Splash screen is the screen that is displayed before the actual cast starts -->
+    <!-- It can display a logo and a status -->
     <div id="splash-screen" class="fbox-container fs">
+        <!-- Logo image that will be displayed on the splash screen -->
+        <!-- Having this element on the page is required to display the logo -->
         <img id="splash-image" src="images/logo.svg" />
+        
+        <!-- Chromecast status container that will display the status on splash screen -->
+        <!-- Having this element on the page is required to display the status -->
         <div id="status-cast">
         </div>
     </div>
+    <!-- Container for Player V4 -->
+    <!-- Having this element on the page is required -->
     <div id="player"></div>
-<script type="text/javascript" src="//player.ooyala.com/static/chromecast/latest/cast.min.js"></script></body>
+    <script type="text/javascript" src="//player.ooyala.com/static/chromecast/latest/cast.min.js"></script>
+    <script>
+        var pageLevelParams = {
+            skin: {
+                inline: {
+                    pauseScreen: {
+                        showDescription: false
+                    }
+                }
+            },
+            onCreate: player =>
+                player.mb.subscribe(
+                    '*',
+                    'cast-sample-app',
+                    (event, parameters) => {
+                        console.log(`Notification about ${event} with the following parameters ${parameters}`);
+                    }
+                )
+        };
+
+        OOCast.init(
+            'urn:x-cast:ooyala',
+            pageLevelParams
+        );
+    </script>
+</body>
+
 </html>
