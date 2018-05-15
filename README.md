@@ -9,6 +9,12 @@ This repository contains the implementation of Google cast sdk as a receiver for
 - For Android, view the sample Chromecast Sender [Android App](https://github.com/ooyala/android-sample-apps/tree/master/ChromecastSampleApp)
 - Purchase a Chromecast device
 
+## Getting started
+To start using custom receiver you need to call [`OOCast.init()`](#oocast) method to initialize the receiver. If you don't want to apply any customization - call the method without any parameters and you should be good to go.
+If you want to customize the receiver - consult with [Customization section](#customization).
+
+> Note: please note that it is crucial to call `OOCast.init()` method in order for receiver to work properly
+
 ## Flow transition between screens
 
 | screen              | transitions to              | description                                                                                 |
@@ -171,12 +177,17 @@ OOCast.init(
 
 More info on customizing the player appearance using `skin` parameter can be found in the docs section [Customizing the Player V4 Skin with skin.json](http://help.ooyala.com/video-platform/reference/pbv4_skin_schema_docs.html)
 
+## Migration
+
+With the new version you need to call `OOCast.init()` method in order for receiver to work properly.
+
+### Basic logo and text customization via receiver.html
+Please consult with [Basic customization](#basic) section of the docs.
+
+### Skin customization via skin.json
+Custom `skin.json` files were deprecated with the new version, appearance customization using custom `skin.json` now is available through page level parameters, please consult with [Altering the skin](#altering-the-skin) section.
+
 ## Debug
 This receiver has enabled several logs in order to show error and warning messages that could be produced during the life cycle of the receiver. This log messages are printed at the developer tool console.
 
 To debug a receiver application please refer to the official documentation at https://developers.google.com/cast/docs/debugging
-
-
-
-
-
