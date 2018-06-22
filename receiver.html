@@ -8,7 +8,10 @@
     <title>Ooyala Receiver</title>
 
     <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
-    <script type="text/javascript" src="//player.ooyala.com/core/e48c9b51282d406f957c666149763424?plugins=bm,cast"></script>
+    <script type="text/javascript" src="//player.ooyala.com/static/v4/stable/4.20.8/core.min.js"></script>
+    <script type="text/javascript" src="//player.ooyala.com/static/v4/stable/4.20.8/video-plugin/bit_wrapper.min.js"></script>
+    <script type="text/javascript" src="//player.ooyala.com/static/v4/stable/4.20.8/skin-plugin/html5-skin.min.js"></script>
+    <link rel="stylesheet" href="//player.ooyala.com/static/v4/stable/4.20.8/skin-plugin/html5-skin.min.css">
 </head>
 
 <body>
@@ -31,6 +34,8 @@
     <script type="text/javascript" src="//player.ooyala.com/static/chromecast/cast.min.js"></script>
     <script>
         var pageLevelParams = {
+            pcode: "pleaseFillTheRightPcode",
+            playerBrandingId: "pleaseFillTheRightPlayerId",             
             skin: {
                 inline: {
                     pauseScreen: {

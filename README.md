@@ -1,5 +1,5 @@
 # Chromecast Receiver + Ooyala Player v4
-This repository contains the implementation of Google cast sdk as a receiver for video playback through Chromecast devices. It has an adaptation of Ooyala Player v4.
+This repository contains the implementation of Google cast sdk as a receiver for video playback through Chromecast devices. It has an adaptation of Ooyala Player v4. 
 
 ## Prerequisites
 - Read the developer documentation at http://help.ooyala.com/video-platform/concepts/chromecast/index.html
@@ -63,6 +63,11 @@ Advanced receiver customization is supported by modifying `receiver.html` and sp
 
 ```javascript
 var pageLevelParams = {
+
+    pcode: "pleaseFillTheRightPcode",
+
+    playerBrandingId: "pleaseFillTheRightPlayerId", 
+
     skin: {
         inline: {
             pauseScreen: {
@@ -70,6 +75,7 @@ var pageLevelParams = {
             }
         }
     },
+    
     onCreate: player =>
         player.mb.subscribe(
             '*', // Name of event to subscribe  to
@@ -85,6 +91,9 @@ OOCast.init(
     pageLevelParams
 );
 ```
+
+#### Fill codes
+Replace pleaseFillTheRightPlayerId and pleaseFillTheRightPcode with your BrandingId and PCode. Otherwise it will cause an issue such as analytics.
 
 
 #### OOCast
