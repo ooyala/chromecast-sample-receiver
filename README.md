@@ -63,6 +63,11 @@ Advanced receiver customization is supported by modifying `receiver.html` and sp
 
 ```javascript
 var pageLevelParams = {
+
+    pcode: "pleaseFillTheRightPcode",
+
+    playerBrandingId: "pleaseFillTheRightPlayerId", 
+
     skin: {
         inline: {
             pauseScreen: {
@@ -70,6 +75,7 @@ var pageLevelParams = {
             }
         }
     },
+    
     onCreate: player =>
         player.mb.subscribe(
             '*', // Name of event to subscribe  to
@@ -79,10 +85,6 @@ var pageLevelParams = {
             }
         )
 };
-
-// Your codes
-OO.__internal.playerParams.playerBrandingId='pleaseFillTheRightPlayerId';
-OO.__internal.playerParams.pcode='pleaseFillTheRightPcode';
 
 OOCast.init(
     'urn:x-cast:ooyala',
