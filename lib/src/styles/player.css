@@ -1,8 +1,18 @@
+
+html,
+body,
+.oo-player-container {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
 body {
     background-color: #000;
 }
 
-#splash-screen img{
+#splash-screen img {
     width: 50%;
 }
 
@@ -18,7 +28,7 @@ body {
     height: 100vh;
 }
 
-#status-cast{
+#status-cast {
     color: #999;
     margin-top: 20px;
     font-size: 20px;
@@ -32,6 +42,14 @@ body {
     -webkit-filter: none !important;
     -moz-filter: none !important;
     filter: none !important;
+}
+
+.oo-player-container {
+    min-width: auto;
+}
+
+.innerWrapper.oo-player {
+    padding-top: 0 !important;
 }
 
 .oo-player-container .oo-action-icon-pause.oo-animate-pause {
