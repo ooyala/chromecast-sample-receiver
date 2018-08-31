@@ -20,11 +20,14 @@
     "mime": "1.4.0",
     "style-loader": "^0.19.0",
     "uglifyjs-webpack-plugin": "^1.1.1",
-    "webpack": "^3.8.1"
+    "webpack": "^3.8.1",
+    "webpack-cli": "^3.1.0",
+    "webpack-dev-server": "3.0.0"
   },
   "scripts": {
     "build": "webpack",
-    "watch": "webpack --watch"
+    "watch": "webpack --watch",
+    "start": "webpack-dev-server"
   },
   "dependencies": {
     "babel-eslint": "^8.2.3",
