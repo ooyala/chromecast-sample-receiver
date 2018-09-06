@@ -38,11 +38,21 @@
             playerBrandingId: "pleaseFillTheRightPlayerId",
             skin: {
                 inline: {
+                    startScreen: {
+                        showDescription: false,
+                        showTitle: false
+                    },
                     pauseScreen: {
-                        showDescription: false
+                        showDescription: false,
+                        showTitle: false
+                    },
+                    endScreen: {
+                        showDescription: false,
+                        showTitle: false
                     }
                 }
             },
+            initialVolume: 0.5,
             onCreate: player =>
                 player.mb.subscribe(
                     '*',
