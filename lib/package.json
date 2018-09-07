@@ -24,7 +24,8 @@
   },
   "scripts": {
     "build": "webpack",
-    "watch": "webpack --watch"
+    "watch": "webpack --watch",
+    "start": "webpack-dev-server"
   },
   "dependencies": {
     "babel-eslint": "^8.2.3",
