@@ -2,8 +2,48 @@
   "extends": "standard",
   "rules": {
     "comma-dangle": ["error", "always-multiline"],
-    "semi": ["error",  "always"],
+    "default-case": ["error"],
+    "id-length": ["error", { "exceptions": ["_", "$"] }],
+    "max-len": [
+      "error", 110,
+      {
+        "ignoreComments": true,
+        "ignorePattern": "if \\(\/\\(\\w*|\\)\/"
+      }
+    ],
+    "no-continue": ["warn"],
+    "no-magic-numbers": ["error", { "ignore": [0, -1, 1] }],
+    "no-param-reassign": ["error"],
     "no-var": ["error"],
-    "prefer-arrow-callback": ["error"]
+    "one-var-declaration-per-line": ["error"],
+    "prefer-arrow-callback": ["error"],
+    "require-jsdoc-except/require-jsdoc": [
+      "error",
+      {
+        "require": {
+          "MethodDefinition": true,
+          "ClassDeclaration": true,
+          "FunctionDeclaration": true
+        },
+        "ignore": [
+          "constructor",
+          "componentWillMount",
+          "componentDidMount",
+          "componentWillUnmount",
+          "componentWillReceiveProps",
+          "render"
+        ]
+      }
+    ],
+    "semi": ["error",  "always"],
+    "valid-jsdoc": [
+      "error",
+      {
+        "prefer": {
+          "return": "returns"
+        },
+        "requireReturn": false
+      }
+    ]
   }
 }
