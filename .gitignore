@@ -2,4 +2,5 @@ lib/node_modules/
 lib/dist/
 .vscode/
 .env
+lib/index.html
 npm-debug.log

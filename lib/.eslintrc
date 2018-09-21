@@ -1,31 +1,49 @@
 {
-    "parser": "babel-eslint",
-    "env": {
-        "browser": true,
-        "commonjs": true,
-        "es6": true,
-        "node": true
-    },
-    "extends": [
-        "eslint:recommended"
+  "extends": "standard",
+  "rules": {
+    "comma-dangle": ["error", "always-multiline"],
+    "default-case": ["error"],
+    "id-length": ["error", { "exceptions": ["_", "$"] }],
+    "max-len": [
+      "error", 110,
+      {
+        "ignoreComments": true,
+        "ignorePattern": "if \\(\/\\(\\w*|\\)\/"
+      }
     ],
-    "parserOptions": {
-        "ecmaVersion": 2017,
-        "ecmaFeatures": {
-            "jsx": true
+    "no-continue": ["warn"],
+    "no-magic-numbers": ["error", { "ignore": [0, -1, 1] }],
+    "no-param-reassign": ["error"],
+    "no-var": ["error"],
+    "one-var-declaration-per-line": ["error"],
+    "prefer-arrow-callback": ["error"],
+    "require-jsdoc-except/require-jsdoc": [
+      "error",
+      {
+        "require": {
+          "MethodDefinition": true,
+          "ClassDeclaration": true,
+          "FunctionDeclaration": true
         },
-        "sourceType": "module"
-    },
-    "rules": {
-        "no-const-assign": "warn",
-        "no-this-before-super": "warn",
-        "no-undef": "warn",
-        "no-console": 0,
-        "no-unreachable": "warn",
-        "no-unused-vars": "warn",
-        "constructor-super": "warn",
-        "valid-typeof": "warn",
-        "max-len": [2, 110, { "ignoreComments": true }],
-        "quotes": [2, "single", { "allowTemplateLiterals": true }]
-    }
+        "ignore": [
+          "constructor",
+          "componentWillMount",
+          "componentDidMount",
+          "componentWillUnmount",
+          "componentWillReceiveProps",
+          "render"
+        ]
+      }
+    ],
+    "semi": ["error",  "always"],
+    "valid-jsdoc": [
+      "error",
+      {
+        "prefer": {
+          "return": "returns"
+        },
+        "requireReturn": false
+      }
+    ]
+  }
 }
