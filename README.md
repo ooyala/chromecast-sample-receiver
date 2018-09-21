@@ -200,3 +200,16 @@ Custom `skin.json` files were deprecated with the new version, appearance custom
 This receiver has enabled several logs in order to show error and warning messages that could be produced during the life cycle of the receiver. This log messages are printed at the developer tool console.
 
 To debug a receiver application please refer to the official documentation at https://developers.google.com/cast/docs/debugging
+
+## Serving receiver.html from local machine
+For debugging you might be willing to serve receiver.html from your local machine. To do this follow these steps:
+1. Define what is your IP in you local network (must be the same as Chromecast device)
+2. Register in Google new application and set it looking onto your local IP: https://cast.google.com/publish/#/overview. Remeber the APP ID you'll get.
+3. Create the file in `lib` folder: `.env` with the content:
+```
+SERVER_IP=___YOUR_IP_HERE____
+SERVER_PORT=8080
+```
+4. Run `npm start`; ensure you can reach: http://___YOUR_IP_HERE____:8080/receiver.html
+5. Run your chromecast sender and set APP ID the one you've got on second step
+6. Enjoy!
