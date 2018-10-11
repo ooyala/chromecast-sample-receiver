@@ -2,3 +2,4 @@ lib/node_modules/
 lib/dist/
 lib/index.html
 npm-debug.log
+.env
