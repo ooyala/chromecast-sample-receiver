@@ -4,3 +4,4 @@ lib/dist/
 .env
 lib/index.html
 npm-debug.log
+.env
