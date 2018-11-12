@@ -34,12 +34,21 @@
     <script type="text/javascript" src="//player.ooyala.com/static/v4/<DEPLOYMENT_PATH>/cast/cast.min.js"></script>    
     <script>
         var pageLevelParams = {
-          pcode: "pleaseFillTheRightPcode",
+          code: "pleaseFillTheRightPcode",
           playerBrandingId: "pleaseFillTheRightPlayerId",
+          autoplay: true,
+          encodingPriority: ["hls", "dash"],
+          initialPlaybackSpeed: 2,
+          initialVolume: 0,
+          loop: true,
+          muteFirstPlay: true,
+          preload: true,
           initialTime: 5,
           skin: {
+            initialBitrate: {"level":1, "duration":30},
             inline: {
               pauseScreen: {
+                showTitle: false,
                 showDescription: false
               }
             },
