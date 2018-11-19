@@ -34,25 +34,24 @@
     <script type="text/javascript" src="//player.ooyala.com/static/v4/<DEPLOYMENT_PATH>/cast/cast.min.js"></script>    
     <script>
         var pageLevelParams = {
-            pcode: "pleaseFillTheRightPcode",
-            playerBrandingId: "pleaseFillTheRightPlayerId",
-            skin: {
-                inline: {
-                    pauseScreen: {
-                        showDescription: false
-                    }
-                }
+          pcode: "pleaseFillTheRightPcode",
+          playerBrandingId: "pleaseFillTheRightPlayerId",
+          skin: {
+            inline: {
+              pauseScreen: {
+                showDescription: false
+              }
             },
-            onCreate: player =>
-                player.mb.subscribe(
-                    '*',
-                    'cast-sample-app',
-                    (event, parameters) => {
-                        console.log(`Notification about ${event} with the following parameters ${parameters}`);
-                    }
-                )
+            onCreate: (player) => 
+              player.mb.subscribe(
+                '*',
+                'cast-sample-app',
+                (event, parameters) => {
+                  console.log(`Notification about ${event} with the following parameters ${parameters}`);
+                }
+              )
+          },
         };
-
         OOCast.init(
             'urn:x-cast:ooyala',
             pageLevelParams
