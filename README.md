@@ -213,3 +213,4 @@ SERVER_PORT=8080
 4. Run `npm start`; ensure you can reach: http://___YOUR_IP_HERE____:8080/receiver.html
 5. Run your chromecast sender and set APP ID the one you've got on second step
 6. Enjoy!
+
