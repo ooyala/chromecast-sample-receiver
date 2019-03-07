@@ -45,6 +45,8 @@
     "start": "webpack-dev-server && webpack --watch",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:debug": "node --inspect node_modules/jest/bin/jest --runInBand"
+    "test:debug": "node --inspect node_modules/jest/bin/jest --runInBand",
+    "lint": "echo",
+    "analysis": "echo"
   }
 }
